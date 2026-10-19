@@ -1,7 +1,7 @@
 import { EXAMPLE_ID, exampleTab } from './seed.js';
 import { ensureLineIds } from './model.js';
 
-const LS_TABS = 'guitartabs:tabs', LS_CUR = 'guitartabs:current';
+const LS_TABS = 'guitartabs:tabs', LS_CUR = 'guitartabs:current', LS_SIDE = 'guitartabs:sidebar';
 
 // localStorage can throw (data: URLs, private mode, blocked storage) — fall back to in-memory
 const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -23,6 +23,10 @@ export function saveTabs(tabs, currentId) {
   lsSet(LS_TABS, JSON.stringify(tabs.filter(t => !t.example)));
   lsSet(LS_CUR, currentId);
 }
+
+// sidebar open/collapsed preference
+export const loadSideOpen = () => lsGet(LS_SIDE) !== 'closed';
+export const saveSideOpen = open => lsSet(LS_SIDE, open ? 'open' : 'closed');
 
 // ---------- backup: export / import as JSON ----------
 export function exportJson(tabs) {

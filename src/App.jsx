@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { pageBudgetCh, printAs, resetMeasure, sheetWidthPx } from './print.js';
 import { BAR, STRINGS, clone, cloneLine, colWidth, copyText, duplicateTab, emptyCol, emptyLine, ensureRunway, fixSpacing, hasNote, isTech, moveLine, newTab, rect, setCell, toText, trimLines, validNote } from './model.js';
-import { exportJson, loadTabs, mergeTabs, parseImport, saveTabs } from './storage.js';
+import { exportJson, loadSideOpen, loadTabs, mergeTabs, parseImport, saveSideOpen, saveTabs } from './storage.js';
 import { play } from './audio.js';
 import { clearHash, shareUrl, tabFromHash } from './share.js';
 import Section from './Section.jsx';
@@ -12,6 +12,8 @@ const initial = loadTabs();
 export default function App() {
   const [tabs, setTabs] = useState(initial.tabs);
   const [currentId, setCurrentId] = useState(initial.currentId);
+  const [sideOpen, setSideOpen] = useState(loadSideOpen);
+  useEffect(() => { saveSideOpen(sideOpen); }, [sideOpen]);
   const [shared, setShared] = useState(() => tabFromHash());        // tab opened from a share link, shown read-only until saved
   const [sel, setSel] = useState({ line: 0, string: 0, col: 0 });   // cursor / selection anchor
   const [selEnd, setSelEnd] = useState(null);                       // {string, col} on same line, or null
@@ -300,9 +302,15 @@ export default function App() {
   const sorted = [...tabs].sort((a, b) => (a.example ? 1 : b.example ? -1 : (b.updatedAt || 0) - (a.updatedAt || 0)));
 
   return (
-    <div className="layout">
+    <div className={'layout' + (sideOpen ? '' : ' collapsed')}>
       <aside className="side">
-        <div className="brand">Tab<i>.</i></div>
+        <div className="sidehead">
+          <div className="brand">Tab<i>.</i></div>
+          <button className="collapse" title={sideOpen ? 'Collapse sidebar' : 'Expand sidebar'} aria-label={sideOpen ? 'Collapse sidebar' : 'Expand sidebar'} aria-expanded={sideOpen} onClick={() => setSideOpen(o => !o)}>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5" /><line x1="8" y1="3.5" x2="8" y2="16.5" /></svg>
+          </button>
+        </div>
+        <div className="sidebody" {...(sideOpen ? {} : { inert: '' })}>
         <button className="new" onClick={addTab}>+ New tab</button>
         <div className="section">Tabs</div>
         <div className="tablist">
@@ -338,6 +346,7 @@ export default function App() {
           <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={e => { importFile(e.target.files[0]); e.target.value = ''; }} />
         </div>
         <button className="help-btn" onClick={() => setHelpOpen(true)}>Help &amp; shortcuts</button>
+        </div>
       </aside>
 
       <div className="main">
