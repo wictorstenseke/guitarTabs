@@ -114,7 +114,7 @@ export default function App() {
     { label: 'Copy link', hint: 'The whole tab lives in the link — anyone can open and save it', run: () => { copyText(shareUrl(tab)); notify('Link copied'); } },
     { label: 'Copy as text', hint: 'Plain ASCII tab for chats, forums, notes', run: () => { copyText(toText(tab)); notify('Copied as text'); } },
     { label: 'Download JSON', hint: 'Just this tab, importable on another device', run: () => { exportJson([tab], tab.title); notify('Downloading…'); } },
-    { label: 'Print…', hint: 'Portrait or landscape, scaled to fill the page', run: () => setPrintOpen(true) },
+    { label: 'Print', hint: 'Portrait or landscape, scaled to fill the page', run: () => setPrintOpen(true) },
   ];
   const addTab = () => { const t = newTab(); setTabs(ts => [...ts, t]); switchTab(t.id, true); setTimeout(() => titleRef.current?.focus(), 0); };
   const updateTab = (id, fn) => setTabs(ts => ts.map(t => { if (t.id !== id || t.example) return t; const c = clone(t); fn(c); c.updatedAt = Date.now(); return c; }));
