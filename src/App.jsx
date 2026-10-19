@@ -15,6 +15,7 @@ export default function App() {
   const [sideOpen, setSideOpen] = useState(loadSideOpen);
   useEffect(() => { saveSideOpen(sideOpen); }, [sideOpen]);
   const [shared, setShared] = useState(() => tabFromHash());        // tab opened from a share link, shown read-only until saved
+  const [editing, setEditing] = useState(false);                    // tabs open in a clean practice view; Edit switches to editing
   const [sel, setSel] = useState({ line: 0, string: 0, col: 0 });   // cursor / selection anchor
   const [selEnd, setSelEnd] = useState(null);                       // {string, col} on same line, or null
   const [dragLine, setDragLine] = useState(null);                   // section index being dragged
@@ -39,7 +40,8 @@ export default function App() {
   const titleRef = useRef(null);
 
   const tab = shared || tabs.find(t => t.id === currentId) || tabs[0];
-  const readOnly = !!tab.example || !!shared;
+  const locked = !!tab.example || !!shared;                          // can never be edited in place
+  const readOnly = locked || !editing;
   const sharedExists = !!shared && tabs.some(t => t.id === shared.id);   // saving would replace this device's copy
   const r = rect(sel, selEnd);
 
@@ -96,7 +98,7 @@ export default function App() {
   const placeAt = (line, string = 0, col = 0) => { setSel({ line, string, col }); setSelEnd(null); };
 
   // ---------- tabs ----------
-  const switchTab = id => { setCurrentId(id); resetSel(); if (shared) { setShared(null); clearHash(); } };
+  const switchTab = (id, edit = false) => { setCurrentId(id); resetSel(); setEditing(edit); if (shared) { setShared(null); clearHash(); } };
   const saveShared = () => {
     const t = { ...shared, updatedAt: Date.now() };
     setTabs(ts => mergeTabs(ts, [t])); setShared(null); clearHash(); setCurrentId(t.id); resetSel();
@@ -108,9 +110,9 @@ export default function App() {
     const url = shareUrl(tab); copyText(url);
     setConfirm({ title: 'Link copied', text: `Anyone who opens it sees this tab and can save it to their own tabs. The whole tab lives in the link (${url.length.toLocaleString()} characters), so it keeps working forever.`, label: 'OK', run: () => {} });
   };
-  const addTab = () => { const t = newTab(); setTabs(ts => [...ts, t]); switchTab(t.id); setTimeout(() => titleRef.current?.focus(), 0); };
+  const addTab = () => { const t = newTab(); setTabs(ts => [...ts, t]); switchTab(t.id, true); setTimeout(() => titleRef.current?.focus(), 0); };
   const updateTab = (id, fn) => setTabs(ts => ts.map(t => { if (t.id !== id || t.example) return t; const c = clone(t); fn(c); c.updatedAt = Date.now(); return c; }));
-  const dupTab = (src = tab) => { const t = duplicateTab(src); setTabs(ts => [...ts, t]); switchTab(t.id); };
+  const dupTab = (src = tab) => { const t = duplicateTab(src); setTabs(ts => [...ts, t]); switchTab(t.id, true); };
   const deleteTab = id => {
     setTabs(ts => { const rest = ts.filter(t => t.id !== id); return rest; });
     if (currentId === id) { setCurrentId(tabs.find(t => t.id !== id).id); resetSel(); }
@@ -333,6 +335,7 @@ export default function App() {
               {menuFor === t.id && (
                 <div className="menu" onClick={e => e.stopPropagation()}>
                   <button onClick={() => { setMenuFor(null); dupTab(t); }}>{t.example ? 'Duplicate to edit' : 'Duplicate'}</button>
+                  {!t.example && <button onClick={() => { setMenuFor(null); switchTab(t.id, true); }}>Edit</button>}
                   {!t.example && <button onClick={() => { setMenuFor(null); setRenaming(t.id); }}>Rename</button>}
                   {!t.example && <button className="danger" onClick={() => { setMenuFor(null); askDeleteTab(t); }}>Delete</button>}
                 </div>
@@ -357,13 +360,16 @@ export default function App() {
               <button className="primary" onClick={askSaveShared}>{sharedExists ? 'Replace my copy' : 'Save to my tabs'}</button>
               <button onClick={() => switchTab(currentId)}>Dismiss</button>
             </>
-          ) : readOnly ? (
+          ) : tab.example ? (
             <>
               <span className="badge">Example · read-only</span>
               <button className="primary" onClick={() => dupTab()}>Duplicate to edit</button>
             </>
+          ) : !editing ? (
+            <button className="primary" onClick={() => { setEditing(true); resetSel(); }}>Edit</button>
           ) : (
             <>
+              <button className="done" onClick={() => { setEditing(false); setSelEnd(null); }} title="Back to the practice view">✓ Done</button>
               <button onClick={() => addLineAfter(tab.lines.length - 1)}>+ New section</button>
               <button onClick={trimEnds} title="Remove trailing dashes (never changes timing)">Trim ends</button>
               <button onClick={askFixSpacing} title="Insert a dash between touching notes (may shift timing)">Fix spacing</button>
@@ -430,6 +436,7 @@ export default function App() {
           <dt><kbd>PgUp</kbd> / <kbd>PgDn</kbd></dt><dd>Jump between sections.</dd>
           <h4>Tabs</h4>
           <dt><kbd>⋯</kbd> in the sidebar</dt><dd>Rename, duplicate or delete a tab. The example tab is read-only — duplicate it to edit.</dd>
+          <dt>Edit / Done</dt><dd>Tabs open in a clean practice view. Edit switches to editing, Done goes back. New and duplicated tabs open in edit mode.</dd>
           <dt>Autosave</dt><dd>Everything is saved in this browser automatically.</dd>
           <dt>Share</dt><dd>Copies a link with the whole tab packed inside. Whoever opens it can save it to their own tabs.</dd>
           <dt>Export / Import</dt><dd>Back up all tabs to a JSON file, or restore from one. Imported tabs with the same id replace the existing ones.</dd>

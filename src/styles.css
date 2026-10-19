@@ -97,6 +97,11 @@
   .sheet.readonly .cell { cursor: default; }
   .sheet.readonly .cell:hover { background: none; }
   .sheet.readonly .linetools, .sheet.readonly .grip { display: none; }
+  .sheet.readonly .cell.sel { background: none; box-shadow: none; color: inherit; }
+  .sheet.readonly .cell.sel.note { color: var(--ink); }
+  .sheet.readonly .repeat input:placeholder-shown { visibility: hidden; }
+  .sheet.readonly .repeat input { border-bottom-color: transparent !important; cursor: default; }
+  .toolbar button.done { border-color: rgba(255,255,255,.4); }
   button {
     font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .02em;
     padding: 7px 12px; border-radius: 6px; cursor: pointer;
