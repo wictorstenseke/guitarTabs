@@ -101,7 +101,8 @@
   .sheet.readonly .cell.sel.note { color: var(--ink); }
   .sheet.readonly .repeat input:placeholder-shown { visibility: hidden; }
   .sheet.readonly .repeat input { border-bottom-color: transparent !important; cursor: default; }
-  .toolbar button.done { border-color: rgba(255,255,255,.4); }
+  .toolbar button.save { display: inline-flex; align-items: center; gap: 6px; border-color: rgba(255,255,255,.4); }
+  .toolbar button.save svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   button {
     font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .02em;
     padding: 7px 12px; border-radius: 6px; cursor: pointer;

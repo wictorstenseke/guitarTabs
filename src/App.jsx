@@ -369,7 +369,9 @@ export default function App() {
             <button className="primary" onClick={() => { setEditing(true); resetSel(); }}>Edit</button>
           ) : (
             <>
-              <button className="done" onClick={() => { setEditing(false); setSelEnd(null); }} title="Back to the practice view">✓ Done</button>
+              <button className="save" onClick={() => { setEditing(false); setSelEnd(null); }} title="Back to the practice view (changes are saved as you type)">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5" /></svg>Save
+              </button>
               <button onClick={() => addLineAfter(tab.lines.length - 1)}>+ New section</button>
               <button onClick={trimEnds} title="Remove trailing dashes (never changes timing)">Trim ends</button>
               <button onClick={askFixSpacing} title="Insert a dash between touching notes (may shift timing)">Fix spacing</button>
@@ -436,7 +438,7 @@ export default function App() {
           <dt><kbd>PgUp</kbd> / <kbd>PgDn</kbd></dt><dd>Jump between sections.</dd>
           <h4>Tabs</h4>
           <dt><kbd>⋯</kbd> in the sidebar</dt><dd>Rename, duplicate or delete a tab. The example tab is read-only — duplicate it to edit.</dd>
-          <dt>Edit / Done</dt><dd>Tabs open in a clean practice view. Edit switches to editing, Done goes back. New and duplicated tabs open in edit mode.</dd>
+          <dt>Edit / Save</dt><dd>Tabs open in a clean practice view. Edit switches to editing, Save goes back (everything is saved as you type anyway). New and duplicated tabs open in edit mode.</dd>
           <dt>Autosave</dt><dd>Everything is saved in this browser automatically.</dd>
           <dt>Share</dt><dd>Copies a link with the whole tab packed inside. Whoever opens it can save it to their own tabs.</dd>
           <dt>Export / Import</dt><dd>Back up all tabs to a JSON file, or restore from one. Imported tabs with the same id replace the existing ones.</dd>
