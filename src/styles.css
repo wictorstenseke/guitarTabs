@@ -101,6 +101,15 @@
   .sheet.readonly .cell.sel.note { color: var(--ink); }
   .sheet.readonly .repeat input:placeholder-shown { visibility: hidden; }
   .sheet.readonly .repeat input { border-bottom-color: transparent !important; cursor: default; }
+  .toolbar .sharewrap { position: relative; }
+  .toolbar .sharebtn { display: inline-flex; align-items: center; gap: 6px; }
+  .toolbar .sharebtn.open { background: rgba(255,255,255,.18); }
+  .toolbar .sharebtn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .toolbar .menu { right: 0; top: calc(100% + 6px); min-width: 170px; font-family: var(--mono); }
+  .toolbar .menu button { color: var(--ink); background: transparent; border: 0; font-size: 12px; letter-spacing: 0; }
+  .toolbar .menu button:hover { background: rgba(27,26,23,.06); }
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 20; background: var(--ink); color: var(--paper); font-family: var(--mono); font-size: 12px; padding: 8px 14px; border-radius: 8px; box-shadow: 0 8px 24px -8px rgba(27,26,23,.5); animation: toast .18s ease-out; pointer-events: none; }
+  @keyframes toast { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
   .toolbar button.save { display: inline-flex; align-items: center; gap: 6px; border-color: rgba(255,255,255,.4); }
   .toolbar button.save svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   button {

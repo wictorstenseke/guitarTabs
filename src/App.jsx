@@ -23,6 +23,9 @@ export default function App() {
   const [menuFor, setMenuFor] = useState(null);                     // tab id with its ⋯ menu open
   const [renaming, setRenaming] = useState(null);                   // tab id being renamed inline
   const [helpOpen, setHelpOpen] = useState(false);
+  const [toast, setToast] = useState(null);                         // short confirmation, auto-hides
+  const toastTimer = useRef(null);
+  const notify = msg => { setToast(msg); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 1800); };
   const [printBudget, setPrintBudget] = useState(() => pageBudgetCh());   // cells per staff row (page width), used on screen and in print
   const [printOpen, setPrintOpen] = useState(false);
   const printDlg = useRef(null);
@@ -75,7 +78,7 @@ export default function App() {
   }, []);
   useEffect(() => {  // close ⋯ menu on outside click / Escape
     if (!menuFor) return;
-    const close = e => { if (e.type === 'keydown' && e.key !== 'Escape') return; if (e.type === 'mousedown' && e.target.closest('.menu, .more')) return; setMenuFor(null); };
+    const close = e => { if (e.type === 'keydown' && e.key !== 'Escape') return; if (e.type === 'mousedown' && e.target.closest('.menu, .more, .sharebtn')) return; setMenuFor(null); };
     document.addEventListener('mousedown', close); document.addEventListener('keydown', close);
     return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', close); };
   }, [menuFor]);
@@ -106,10 +109,12 @@ export default function App() {
   const askSaveShared = () => sharedExists
     ? setConfirm({ title: 'Replace your copy?', text: `You already have “${shared.title || 'Untitled'}”. Saving replaces it with this shared version.`, label: 'Replace', run: saveShared })
     : saveShared();
-  const share = () => {
-    const url = shareUrl(tab); copyText(url);
-    setConfirm({ title: 'Link copied', text: `Anyone who opens it sees this tab and can save it to their own tabs. The whole tab lives in the link (${url.length.toLocaleString()} characters), so it keeps working forever.`, label: 'OK', run: () => {} });
-  };
+  const SHARE = '__share';   // menuFor value for the toolbar share menu
+  const shareActions = [
+    { label: 'Copy link', hint: 'The whole tab lives in the link — anyone can open and save it', run: () => { copyText(shareUrl(tab)); notify('Link copied'); } },
+    { label: 'Copy as text', hint: 'Plain ASCII tab for chats, forums, notes', run: () => { copyText(toText(tab)); notify('Copied as text'); } },
+    { label: 'Download JSON', hint: 'Just this tab, importable on another device', run: () => { exportJson([tab], tab.title); notify('Downloading…'); } },
+  ];
   const addTab = () => { const t = newTab(); setTabs(ts => [...ts, t]); switchTab(t.id, true); setTimeout(() => titleRef.current?.focus(), 0); };
   const updateTab = (id, fn) => setTabs(ts => ts.map(t => { if (t.id !== id || t.example) return t; const c = clone(t); fn(c); c.updatedAt = Date.now(); return c; }));
   const dupTab = (src = tab) => { const t = duplicateTab(src); setTabs(ts => [...ts, t]); switchTab(t.id, true); };
@@ -344,7 +349,7 @@ export default function App() {
           ))}
         </div>
         <div className="io">
-          <button onClick={() => exportJson(tabs)} title="Download all your tabs as a JSON backup">Export</button>
+          <button onClick={() => exportJson(tabs.filter(t => !t.example))} title="Download all your tabs as a JSON backup">Export</button>
           <button onClick={() => fileRef.current?.click()} title="Import tabs from a JSON backup">Import</button>
           <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={e => { importFile(e.target.files[0]); e.target.value = ''; }} />
         </div>
@@ -390,8 +395,16 @@ export default function App() {
               onChange={e => { setTempo(+e.target.value); }} />
             <span className="tempo">{tempo}/s</span>
           </span>
-          <button onClick={() => copyText(toText(tab))}>Copy text</button>
-          <button onClick={share} title="Copy a link that contains this whole tab">Share</button>
+          <span className="sharewrap">
+            <button className={'sharebtn' + (menuFor === SHARE ? ' open' : '')} aria-haspopup="menu" aria-expanded={menuFor === SHARE} onClick={() => setMenuFor(m => m === SHARE ? null : SHARE)}>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8M5 5l3-3 3 3M3.5 8.5v4a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-4" /></svg>Share
+            </button>
+            {menuFor === SHARE && (
+              <div className="menu" role="menu" onClick={e => e.stopPropagation()}>
+                {shareActions.map(a => <button key={a.label} role="menuitem" title={a.hint} onClick={() => { setMenuFor(null); a.run(); }}>{a.label}</button>)}
+              </div>
+            )}
+          </span>
           <button className="primary" onClick={() => setPrintOpen(true)}>Print</button>
         </div>
 
@@ -413,6 +426,8 @@ export default function App() {
         </div>
 
       </div>
+
+      {toast && <div className="toast" role="status">{toast}</div>}
 
       <dialog className="help" ref={helpDlg} onClose={() => setHelpOpen(false)}>
         <h3>Help &amp; shortcuts</h3>
@@ -440,7 +455,7 @@ export default function App() {
           <dt><kbd>⋯</kbd> in the sidebar</dt><dd>Rename, duplicate or delete a tab. The example tab is read-only — duplicate it to edit.</dd>
           <dt>Edit / Save</dt><dd>Tabs open in a clean practice view. Edit switches to editing, Save goes back (everything is saved as you type anyway). New and duplicated tabs open in edit mode.</dd>
           <dt>Autosave</dt><dd>Everything is saved in this browser automatically.</dd>
-          <dt>Share</dt><dd>Copies a link with the whole tab packed inside. Whoever opens it can save it to their own tabs.</dd>
+          <dt>Share</dt><dd>Copy a link (the whole tab is packed inside — whoever opens it can save it), copy as plain text, or download this tab as JSON.</dd>
           <dt>Export / Import</dt><dd>Back up all tabs to a JSON file, or restore from one. Imported tabs with the same id replace the existing ones.</dd>
           <h4>Playback</h4>
           <dt><kbd>▶ Play</kbd></dt><dd>Plays the tab: every column is one beat at the chosen speed. Technique and bar-line columns take no time; section repeats are ignored.</dd>

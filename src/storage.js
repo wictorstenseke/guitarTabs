@@ -29,11 +29,13 @@ export const loadSideOpen = () => lsGet(LS_SIDE) !== 'closed';
 export const saveSideOpen = open => lsSet(LS_SIDE, open ? 'open' : 'closed');
 
 // ---------- backup: export / import as JSON ----------
-export function exportJson(tabs) {
-  const data = JSON.stringify({ app: 'guitartabs', version: 1, exportedAt: new Date().toISOString(), tabs: tabs.filter(t => !t.example) }, null, 1);
+// `name` (optional) names the file; otherwise it's a dated full backup.
+export function exportJson(tabs, name) {
+  const data = JSON.stringify({ app: 'guitartabs', version: 1, exportedAt: new Date().toISOString(), tabs: tabs.map(t => ({ ...t, example: false })) }, null, 1);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
-  a.download = `guitar-tabs-${new Date().toISOString().slice(0, 10)}.json`;
+  const slug = (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  a.download = (slug || `guitar-tabs-${new Date().toISOString().slice(0, 10)}`) + '.json';
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
