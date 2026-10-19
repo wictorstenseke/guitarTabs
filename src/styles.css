@@ -88,13 +88,18 @@
   }
   .toolbar .spacer { flex: 1; }
   .toolbar .play { display: flex; align-items: center; gap: 8px; }
-  .toolbar .seg { display: inline-flex; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; overflow: hidden; }
-  .toolbar .seg button { border: 0; border-radius: 0; background: transparent; color: rgba(246,243,236,.7); padding: 6px 10px; }
-  .toolbar .seg button + button { border-left: 1px solid rgba(255,255,255,.18); }
-  .toolbar .seg button.active { background: rgba(255,255,255,.14); color: var(--paper); }
-  .toolbar .seg .page { display: block; border: 1.2px solid currentColor; border-radius: 1.5px; }
-  .toolbar .seg .page.portrait { width: 8px; height: 11px; }
-  .toolbar .seg .page.landscape { width: 11px; height: 8px; }
+  .menu .mh { font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); padding: 8px 10px 3px; }
+  .menu.display { min-width: 190px; }
+  .menu.display .page { display: block; border: 1.2px solid currentColor; border-radius: 1.5px; flex: none; }
+  .menu.display .page.portrait { width: 8px; height: 11px; }
+  .menu.display .page.landscape { width: 11px; height: 8px; }
+  .menu.display button.active { color: var(--accent); }
+  .menu.display button .ico { margin-left: auto; }
+  .menu .zoomrow { display: flex; align-items: center; gap: 4px; padding: 4px 6px 6px; }
+  .menu .zoomrow button { width: 28px; height: 28px; padding: 0; justify-content: center; border: 1px solid var(--rule); border-radius: 6px; font-size: 15px; line-height: 1; }
+  .menu .zoomrow button:disabled { opacity: .35; cursor: default; background: transparent; }
+  .menu .zoomrow .pct { min-width: 5ch; text-align: center; font-size: 12px; }
+  .menu .zoomrow button.reset { width: auto; padding: 0 9px; font-size: 11px; margin-left: auto; }
   .toolbar .play input[type=range] { width: 90px; accent-color: var(--accent); }
   .toolbar .tempo { font-size: 11px; color: rgba(246,243,236,.7); min-width: 3ch; }
   .toolbar .ctx { display: flex; gap: 4px; margin-left: 6px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.18); }

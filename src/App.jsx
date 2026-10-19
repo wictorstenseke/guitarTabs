@@ -30,6 +30,9 @@ export default function App() {
   const [printBudget, setPrintBudget] = useState(null);             // row budget override while printing, else null
   const [orient, setOrient] = useState(loadOrient);                 // view-mode page orientation (editing is always portrait)
   useEffect(() => { saveOrient(orient); }, [orient]);
+  const [zoom, setZoom] = useState(1);                              // view-mode zoom of the staff only (1 = fitted size)
+  const ZOOM = { min: 0.5, max: 2, step: 0.1 };
+  const zoomBy = d => setZoom(z => Math.round(Math.max(ZOOM.min, Math.min(ZOOM.max, z + d)) * 10) / 10);
   const [availW, setAvailW] = useState(() => window.innerWidth);    // width the sheet may use; view mode shrinks the font to fit
   const [, setFontsReady] = useState(false);
   const layoutRef = useRef(null), sideRef = useRef(null);
@@ -57,6 +60,7 @@ export default function App() {
   if (readOnly && fitScreenFontPx(budget, availW) < SCREEN_FONT_PX) {   // doesn't fit at full size: tighten padding, then shrink the font
     sheetPad = VIEW_PAD_PX; screenFont = fitScreenFontPx(budget, availW, sheetPad);
   }
+  if (readOnly) screenFont = Math.round(screenFont * zoom * 4) / 4;
   const sheetWidth = sheetWidthPx(budget, screenFont, sheetPad);
   const sharedExists = !!shared && tabs.some(t => t.id === shared.id);   // saving would replace this device's copy
   const r = rect(sel, selEnd);
@@ -120,7 +124,7 @@ export default function App() {
   const placeAt = (line, string = 0, col = 0) => { setSel({ line, string, col }); setSelEnd(null); };
 
   // ---------- tabs ----------
-  const switchTab = (id, edit = false) => { setCurrentId(id); resetSel(); setEditing(edit); if (shared) { setShared(null); clearHash(); } };
+  const switchTab = (id, edit = false) => { setCurrentId(id); resetSel(); setEditing(edit); setZoom(1); if (shared) { setShared(null); clearHash(); } };
   const saveShared = () => {
     const t = { ...shared, updatedAt: Date.now() };
     setTabs(ts => mergeTabs(ts, [t])); setShared(null); clearHash(); setCurrentId(t.id); resetSel();
@@ -128,7 +132,7 @@ export default function App() {
   const askSaveShared = () => sharedExists
     ? setConfirm({ title: 'Replace your copy?', text: `You already have “${shared.title || 'Untitled'}”. Saving replaces it with this shared version.`, label: 'Replace', run: saveShared })
     : saveShared();
-  const SHARE = '__share';   // menuFor value for the toolbar share menu
+  const SHARE = '__share', DISPLAY = '__display';   // menuFor values for the toolbar menus
   const shareActions = [
     { label: 'Copy link', icon: 'link', hint: 'The whole tab lives in the link — anyone can open and save it', run: () => { copyText(shareUrl(tab)); notify('Link copied'); } },
     { label: 'Copy as text', icon: 'text', hint: 'Plain ASCII tab for chats, forums, notes', run: () => { copyText(toText(tab)); notify('Copied as text'); } },
@@ -294,6 +298,7 @@ export default function App() {
       const old = tab.lines[sel.line].cols[sel.col][sel.string];
       if (old.length > 1) { const v = old.slice(0, -1); setNote(validNote(v) ? v : v.replace(/[hp\/\\b~]$/, '')); return; }
     }
+    if (readOnly && (e.key === '+' || e.key === '=' || e.key === '-')) { zoomBy(e.key === '-' ? -ZOOM.step : ZOOM.step); e.preventDefault(); return; }
     const sh = e.shiftKey;
     const map = {
       ArrowLeft: () => move(0, 0, -1, sh), ArrowRight: () => move(0, 0, 1, sh),
@@ -410,12 +415,25 @@ export default function App() {
           )}
           <span className="spacer" />
           {readOnly && (
-            <span className="seg" role="group" aria-label="Display orientation">
-              {['portrait', 'landscape'].map(o => (
-                <button key={o} className={orient === o ? 'active' : ''} aria-pressed={orient === o} onClick={() => setOrient(o)} title={`Lay out as A4 ${o}`}>
-                  <span className={'page ' + o} />{o[0].toUpperCase() + o.slice(1)}
-                </button>
-              ))}
+            <span className="sharewrap">
+              <button className={'sharebtn' + (menuFor === DISPLAY ? ' open' : '')} aria-haspopup="menu" aria-expanded={menuFor === DISPLAY} onClick={() => setMenuFor(m => m === DISPLAY ? null : DISPLAY)}>Display</button>
+              {menuFor === DISPLAY && (
+                <div className="menu display" role="menu" onClick={e => e.stopPropagation()}>
+                  <div className="mh">Orientation</div>
+                  {['portrait', 'landscape'].map(o => (
+                    <button key={o} role="menuitemradio" aria-checked={orient === o} className={orient === o ? 'active' : ''} onClick={() => { setOrient(o); setMenuFor(null); }}>
+                      <span className={'page ' + o} />{o[0].toUpperCase() + o.slice(1)}{orient === o && <Icon name="check" />}
+                    </button>
+                  ))}
+                  <div className="mh">Zoom</div>
+                  <div className="zoomrow">
+                    <button onClick={() => zoomBy(-ZOOM.step)} disabled={zoom <= ZOOM.min} title="Zoom out (−)">−</button>
+                    <span className="pct">{Math.round(zoom * 100)}%</span>
+                    <button onClick={() => zoomBy(ZOOM.step)} disabled={zoom >= ZOOM.max} title="Zoom in (+)">+</button>
+                    <button className="reset" onClick={() => setZoom(1)} disabled={zoom === 1}>Reset</button>
+                  </div>
+                </div>
+              )}
             </span>
           )}
           <span className="play">
@@ -486,6 +504,7 @@ export default function App() {
           <dt>Edit / Save</dt><dd>Tabs open in a clean practice view. Edit switches to editing, Save goes back (everything is saved as you type anyway). New and duplicated tabs open in edit mode.</dd>
           <dt>Autosave</dt><dd>Everything is saved in this browser automatically.</dd>
           <dt>Share</dt><dd>Copy a link (the whole tab is packed inside — whoever opens it can save it), copy as plain text, download this tab as JSON, or print.</dd>
+          <dt>Display</dt><dd>In the practice view: lay the tab out as A4 portrait or landscape, and zoom the staff (<kbd>+</kbd> / <kbd>-</kbd> keys work too). Zoom resets when you switch tabs.</dd>
           <dt>Export / Import</dt><dd>Back up all tabs to a JSON file, or restore from one. Imported tabs with the same id replace the existing ones.</dd>
           <h4>Playback</h4>
           <dt><Icon name="play" /> Play</dt><dd>Plays the tab: every column is one beat at the chosen speed. Technique and bar-line columns take no time; section repeats are ignored.</dd>
