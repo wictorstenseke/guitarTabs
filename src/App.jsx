@@ -427,11 +427,11 @@ export default function App() {
                   ))}
                   <div className="mh">Zoom</div>
                   <div className="zoomrow">
-                    <button onClick={() => zoomBy(-ZOOM.step)} disabled={zoom <= ZOOM.min} title="Zoom out (−)">−</button>
+                    <button onClick={() => zoomBy(-ZOOM.step)} disabled={zoom <= ZOOM.min} title="Zoom out (−)" aria-label="Zoom out">−</button>
                     <span className="pct">{Math.round(zoom * 100)}%</span>
-                    <button onClick={() => zoomBy(ZOOM.step)} disabled={zoom >= ZOOM.max} title="Zoom in (+)">+</button>
-                    <button className="reset" onClick={() => setZoom(1)} disabled={zoom === 1}>Reset</button>
+                    <button onClick={() => zoomBy(ZOOM.step)} disabled={zoom >= ZOOM.max} title="Zoom in (+)" aria-label="Zoom in">+</button>
                   </div>
+                  <button className="reset" onClick={() => setZoom(1)} disabled={zoom === 1}>Reset zoom</button>
                 </div>
               )}
             </span>

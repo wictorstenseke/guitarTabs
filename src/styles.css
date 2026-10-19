@@ -89,17 +89,20 @@
   .toolbar .spacer { flex: 1; }
   .toolbar .play { display: flex; align-items: center; gap: 8px; }
   .menu .mh { font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); padding: 8px 10px 3px; }
-  .menu.display { min-width: 190px; }
+  .menu.display { min-width: 210px; }
   .menu.display .page { display: block; border: 1.2px solid currentColor; border-radius: 1.5px; flex: none; }
   .menu.display .page.portrait { width: 8px; height: 11px; }
   .menu.display .page.landscape { width: 11px; height: 8px; }
-  .menu.display button.active { color: var(--accent); }
+  .menu.display button.active { color: var(--accent); background: rgba(194,80,42,.12); }
+  .menu.display button.active:hover { background: rgba(194,80,42,.18); }
   .menu.display button .ico { margin-left: auto; }
-  .menu .zoomrow { display: flex; align-items: center; gap: 4px; padding: 4px 6px 6px; }
-  .menu .zoomrow button { width: 28px; height: 28px; padding: 0; justify-content: center; border: 1px solid var(--rule); border-radius: 6px; font-size: 15px; line-height: 1; }
-  .menu .zoomrow button:disabled { opacity: .35; cursor: default; background: transparent; }
-  .menu .zoomrow .pct { min-width: 5ch; text-align: center; font-size: 12px; }
-  .menu .zoomrow button.reset { width: auto; padding: 0 9px; font-size: 11px; margin-left: auto; }
+  .menu .zoomrow { display: flex; align-items: stretch; gap: 6px; padding: 4px 6px 6px; }
+  .menu .zoomrow button { flex: 1; height: 44px; padding: 0; justify-content: center; border: 1px solid var(--rule); border-radius: 8px; background: rgba(27,26,23,.04); font-size: 22px; line-height: 1; }
+  .menu .zoomrow button:hover { background: rgba(27,26,23,.1); }
+  .menu .zoomrow button:disabled { opacity: .3; cursor: default; background: transparent; }
+  .menu .zoomrow .pct { flex: 0 0 5.5ch; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: var(--ink); }
+  .menu.display button.reset { justify-content: center; margin: 0 6px 4px; font-size: 11px; color: var(--ink-soft); border: 1px dashed var(--rule); }
+  .menu.display button.reset:disabled { opacity: .4; cursor: default; background: transparent; }
   .toolbar .play input[type=range] { width: 90px; accent-color: var(--accent); }
   .toolbar .tempo { font-size: 11px; color: rgba(246,243,236,.7); min-width: 3ch; }
   .toolbar .ctx { display: flex; gap: 4px; margin-left: 6px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.18); }
@@ -117,7 +120,7 @@
   .toolbar .sharewrap { position: relative; }
 
   .toolbar .sharebtn.open { background: #d35a31; }
-  .toolbar .menu { right: 0; top: calc(100% + 6px); min-width: 170px; font-family: var(--mono); }
+  .toolbar .menu { right: 0; top: calc(100% + 6px); min-width: 170px; font-family: var(--mono); color: var(--ink); }
   .toolbar .menu button { color: var(--ink); background: transparent; border: 0; font-size: 12px; letter-spacing: 0; }
   .toolbar .menu button:hover { background: rgba(27,26,23,.06); }
   .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 20; background: var(--ink); color: var(--paper); font-family: var(--mono); font-size: 12px; padding: 8px 14px; border-radius: 8px; box-shadow: 0 8px 24px -8px rgba(27,26,23,.5); animation: toast .18s ease-out; pointer-events: none; }
