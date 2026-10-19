@@ -93,7 +93,7 @@
   .menu.display .page { display: block; border: 1.2px solid currentColor; border-radius: 1.5px; flex: none; }
   .menu.display .page.portrait { width: 8px; height: 11px; }
   .menu.display .page.landscape { width: 11px; height: 8px; }
-  .menu.display button.active { color: var(--accent); background: rgba(194,80,42,.12); }
+  .menu.display button.active, .toolbar button.active { color: var(--accent); background: rgba(194,80,42,.12); }
   .menu.display button.active:hover { background: rgba(194,80,42,.18); }
   .menu.display button .ico { margin-left: auto; }
   .menu .zoomrow { display: flex; align-items: stretch; gap: 6px; padding: 4px 6px 6px; }
@@ -167,6 +167,9 @@
   .cell { width: calc(var(--w) * 1ch); text-align: center; cursor: pointer; color: var(--dash); border-radius: 2px; }
   .cell:hover { background: rgba(27,26,23,.08); }
   .cell.note { color: var(--ink); }
+  .cell.ghost { color: #b9b2a3; }
+  .cell.ghost .oct { opacity: .55; }
+  .cell.ghost:hover { color: var(--dash); }
   .cell.barline { color: var(--ink); font-weight: 500; }
   .cell.playing { background: rgba(194,80,42,.22); color: var(--ink); }
   .cell.range { background: var(--range); color: var(--ink); }

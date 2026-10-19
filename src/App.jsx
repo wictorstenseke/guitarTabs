@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { SCREEN_FONT_PX, SHEET_PAD_PX, VIEW_PAD_PX, fitScreenFontPx, pageBudgetCh, printAs, resetMeasure, sheetWidthPx } from './print.js';
 import { BAR, STRINGS, clone, cloneLine, colWidth, copyText, duplicateTab, emptyCol, emptyLine, ensureRunway, fixSpacing, hasNote, isTech, moveLine, newTab, rect, setCell, toText, trimLines, validNote } from './model.js';
-import { exportJson, loadOrient, loadSideOpen, loadTabs, mergeTabs, parseImport, saveOrient, saveSideOpen, saveTabs } from './storage.js';
+import { exportJson, loadHints, loadOrient, loadSideOpen, loadTabs, mergeTabs, parseImport, saveHints, saveOrient, saveSideOpen, saveTabs } from './storage.js';
 import { play } from './audio.js';
 import { clearHash, shareUrl, tabFromHash } from './share.js';
 import Section from './Section.jsx';
@@ -30,6 +30,8 @@ export default function App() {
   const [printBudget, setPrintBudget] = useState(null);             // row budget override while printing, else null
   const [orient, setOrient] = useState(loadOrient);                 // view-mode page orientation (editing is always portrait)
   useEffect(() => { saveOrient(orient); }, [orient]);
+  const [hintsOn, setHintsOn] = useState(loadHints);               // editing: show where else the selected note can be played
+  useEffect(() => { saveHints(hintsOn); }, [hintsOn]);
   const [zoom, setZoom] = useState(1);                              // view-mode zoom of the staff only (1 = fitted size)
   const ZOOM = { min: 0.5, max: 2, step: 0.1 };
   const zoomBy = d => setZoom(z => Math.round(Math.max(ZOOM.min, Math.min(ZOOM.max, z + d)) * 10) / 10);
@@ -405,6 +407,7 @@ export default function App() {
               <button onClick={() => addLineAfter(tab.lines.length - 1)}>+ New section</button>
               <button onClick={trimEnds} title="Remove trailing dashes (never changes timing)">Trim ends</button>
               <button onClick={askFixSpacing} title="Insert a dash between touching notes (may shift timing)">Fix spacing</button>
+              <button className={hintsOn ? 'active' : ''} aria-pressed={hintsOn} onClick={() => setHintsOn(v => !v)} title="Show where else the selected note can be played">Hints</button>
               {fullCols && (
                 <span className="ctx">
                   <button onClick={shiftLeft} disabled={!canShiftLeft} title="Remove one blank column before the selection"><Icon name="left" />Pull in</button>
@@ -467,7 +470,7 @@ export default function App() {
           </div>
           <div id="editor">
             {tab.lines.map((line, li) => (
-              <Section key={line.id} line={line} li={li} sel={sel} selEnd={selEnd} r={r} readOnly={readOnly} dragLine={dragLine} on={on} printBudget={budget} playCol={playPos?.line === li ? playPos.col : -1} />
+              <Section key={line.id} line={line} li={li} sel={sel} selEnd={selEnd} r={r} readOnly={readOnly} dragLine={dragLine} on={on} printBudget={budget} playCol={playPos?.line === li ? playPos.col : -1} hintsOn={hintsOn} />
             ))}
           </div>
           <div className="pagenote">Laid out as A4 {viewOrient} · sections wrap where they will on paper</div>
@@ -504,6 +507,7 @@ export default function App() {
           <dt>Edit / Save</dt><dd>Tabs open in a clean practice view. Edit switches to editing, Save goes back (everything is saved as you type anyway). New and duplicated tabs open in edit mode.</dd>
           <dt>Autosave</dt><dd>Everything is saved in this browser automatically.</dd>
           <dt>Share</dt><dd>Copy a link (the whole tab is packed inside — whoever opens it can save it), copy as plain text, download this tab as JSON, or print.</dd>
+          <dt>Hints</dt><dd>While editing, the note under the cursor shows where else it can be played: grey frets on the other strings, fainter ones an octave away. Type over one to use it. The Hints button turns this off.</dd>
           <dt>Display</dt><dd>In the practice view: lay the tab out as A4 portrait or landscape, and zoom the staff (<kbd>+</kbd> / <kbd>-</kbd> keys work too). Zoom resets when you switch tabs.</dd>
           <dt>Export / Import</dt><dd>Back up all tabs to a JSON file, or restore from one. Imported tabs with the same id replace the existing ones.</dd>
           <h4>Playback</h4>

@@ -1,7 +1,7 @@
 import { EXAMPLE_ID, exampleTab } from './seed.js';
 import { ensureLineIds } from './model.js';
 
-const LS_TABS = 'guitartabs:tabs', LS_CUR = 'guitartabs:current', LS_SIDE = 'guitartabs:sidebar', LS_ORIENT = 'guitartabs:orient';
+const LS_TABS = 'guitartabs:tabs', LS_CUR = 'guitartabs:current', LS_SIDE = 'guitartabs:sidebar', LS_ORIENT = 'guitartabs:orient', LS_HINTS = 'guitartabs:hints';
 
 // localStorage can throw (data: URLs, private mode, blocked storage) — fall back to in-memory
 const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -27,6 +27,10 @@ export function saveTabs(tabs, currentId) {
 // view-mode page orientation preference
 export const loadOrient = () => (lsGet(LS_ORIENT) === 'landscape' ? 'landscape' : 'portrait');
 export const saveOrient = o => lsSet(LS_ORIENT, o);
+
+// fret hints while editing (on unless switched off)
+export const loadHints = () => lsGet(LS_HINTS) !== 'off';
+export const saveHints = on => lsSet(LS_HINTS, on ? 'on' : 'off');
 
 // sidebar open/collapsed preference
 export const loadSideOpen = () => lsGet(LS_SIDE) !== 'closed';

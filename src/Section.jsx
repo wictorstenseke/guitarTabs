@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { STRINGS, colWidth, inRect } from './model.js';
+import { colHints, hintWidth } from './hints.js';
 import { chunkCols } from './print.js';
 import GripIcon from './GripIcon.jsx';
 import Icon from './Icon.jsx';
 
-export default function Section({ line, li, sel, selEnd, r, readOnly, dragLine, on, printBudget, playCol = -1 }) {
+export default function Section({ line, li, sel, selEnd, r, readOnly, dragLine, on, printBudget, playCol = -1, hintsOn = false }) {
   const [drop, setDrop] = useState('');          // '', 'drop-above', 'drop-below'
   const widths = line.cols.map(colWidth);
+  // fret hints: with the cursor on a fret, the other strings of that column show where else it can be played
+  const hints = hintsOn && !readOnly && !selEnd && li === sel.line && line.cols[sel.col] ? colHints(line.cols[sel.col], sel.string) : null;
+  if (hints) widths[sel.col] = Math.max(widths[sel.col], hintWidth(hints));
   const isDragging = dragLine === li;
   // on screen one staff; when printing, split into rows that fit the page
   const noteCh = line.note ? line.note.length + 1 : 0;   // 1ch gap + the text, nothing for an empty note
@@ -30,7 +34,8 @@ export default function Section({ line, li, sel, selEnd, r, readOnly, dragLine, 
             const ci = c0 + i;
             const note = col[si], w = widths[ci];
             const style = { '--w': w };
-            let cls = 'cell' + (note ? ' note' : '') + (note === '|' ? ' barline' : '') + (ci === playCol ? ' playing' : '');
+            const hs = hints && ci === sel.col && !note && hints[si].length ? hints[si] : null;
+            let cls = 'cell' + (note ? ' note' : '') + (note === '|' ? ' barline' : '') + (ci === playCol ? ' playing' : '') + (hs ? ' ghost' : '');
             if (selEnd && inRect(r, li, si, ci)) {
               cls += ' range';
               const T = si === r.s0, B = si === r.s1, L = ci === r.c0, R = ci === r.c1, a = 'var(--accent)';
@@ -44,7 +49,7 @@ export default function Section({ line, li, sel, selEnd, r, readOnly, dragLine, 
               <span key={ci} className={cls} style={style}
                 onMouseDown={e => { e.preventDefault(); on.cellDown(li, si, ci, e.shiftKey); }}
                 onMouseEnter={() => on.cellEnter(li, si, ci)}
-              >{note || '-'.repeat(w)}</span>
+              >{hs ? hs.map((h, k) => <span key={k} className={h.oct ? 'oct' : ''}>{(k ? ' ' : '') + h.fret}</span>) : note || '-'.repeat(w)}</span>
             );
           })}
           <span className="bar">|</span>
