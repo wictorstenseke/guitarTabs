@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { pageBudgetCh, printAs, resetMeasure, sheetWidthPx } from './print.js';
+import { SCREEN_FONT_PX, SHEET_PAD_PX, VIEW_PAD_PX, fitScreenFontPx, pageBudgetCh, printAs, resetMeasure, sheetWidthPx } from './print.js';
 import { BAR, STRINGS, clone, cloneLine, colWidth, copyText, duplicateTab, emptyCol, emptyLine, ensureRunway, fixSpacing, hasNote, isTech, moveLine, newTab, rect, setCell, toText, trimLines, validNote } from './model.js';
-import { exportJson, loadSideOpen, loadTabs, mergeTabs, parseImport, saveSideOpen, saveTabs } from './storage.js';
+import { exportJson, loadOrient, loadSideOpen, loadTabs, mergeTabs, parseImport, saveOrient, saveSideOpen, saveTabs } from './storage.js';
 import { play } from './audio.js';
 import { clearHash, shareUrl, tabFromHash } from './share.js';
 import Section from './Section.jsx';
@@ -27,7 +27,12 @@ export default function App() {
   const [toast, setToast] = useState(null);                         // short confirmation, auto-hides
   const toastTimer = useRef(null);
   const notify = msg => { setToast(msg); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 1800); };
-  const [printBudget, setPrintBudget] = useState(() => pageBudgetCh());   // cells per staff row (page width), used on screen and in print
+  const [printBudget, setPrintBudget] = useState(null);             // row budget override while printing, else null
+  const [orient, setOrient] = useState(loadOrient);                 // view-mode page orientation (editing is always portrait)
+  useEffect(() => { saveOrient(orient); }, [orient]);
+  const [availW, setAvailW] = useState(() => window.innerWidth);    // width the sheet may use; view mode shrinks the font to fit
+  const [, setFontsReady] = useState(false);
+  const layoutRef = useRef(null), sideRef = useRef(null);
   const [printOpen, setPrintOpen] = useState(false);
   const printDlg = useRef(null);
   const fileRef = useRef(null);                                     // hidden file input for import
@@ -35,7 +40,6 @@ export default function App() {
   const [tempo, setTempo] = useState(6);                            // columns per second
   const tempoRef = useRef(tempo); tempoRef.current = tempo;         // read live by the player
   const stopRef = useRef(null);                                     // stop() of the current playback
-  const sheetWidth = sheetWidthPx(pageBudgetCh('portrait'));   // screen always lays out as portrait
   const helpDlg = useRef(null);
   const dragging = useRef(false);   // mouse-drag cell selection in progress
   const lastTyped = useRef(null);   // cell key of last digit typed (two-digit join)
@@ -47,6 +51,13 @@ export default function App() {
   const tab = shared || tabs.find(t => t.id === currentId) || tabs[0];
   const locked = !!tab.example || !!shared;                          // can never be edited in place
   const readOnly = locked || !editing;
+  const viewOrient = readOnly ? orient : 'portrait';               // editing always lays out as portrait
+  const budget = printBudget ?? pageBudgetCh(viewOrient);          // cells per staff row, on screen and in print
+  let sheetPad = SHEET_PAD_PX, screenFont = SCREEN_FONT_PX;
+  if (readOnly && fitScreenFontPx(budget, availW) < SCREEN_FONT_PX) {   // doesn't fit at full size: tighten padding, then shrink the font
+    sheetPad = VIEW_PAD_PX; screenFont = fitScreenFontPx(budget, availW, sheetPad);
+  }
+  const sheetWidth = sheetWidthPx(budget, screenFont, sheetPad);
   const sharedExists = !!shared && tabs.some(t => t.id === shared.id);   // saving would replace this device's copy
   const r = rect(sel, selEnd);
 
@@ -76,7 +87,13 @@ export default function App() {
     } catch (err) { setConfirm({ title: 'Import failed', text: err.message, label: 'OK', run: () => {} }); }
   };
   useEffect(() => {  // re-measure once web fonts are in, so the row budget matches the real glyph width
-    document.fonts?.ready.then(() => { resetMeasure(); setPrintBudget(pageBudgetCh()); });
+    document.fonts?.ready.then(() => { resetMeasure(); setFontsReady(true); });
+  }, []);
+  useEffect(() => {  // track the width available to the sheet (layout minus sidebar and main padding)
+    const measure = () => setAvailW(layoutRef.current.clientWidth - sideRef.current.offsetWidth - 48);   // 48 = .main side padding
+    measure();
+    const ro = new ResizeObserver(measure); ro.observe(layoutRef.current); ro.observe(sideRef.current);
+    return () => ro.disconnect();
   }, []);
   useEffect(() => {  // close ⋯ menu on outside click / Escape
     if (!menuFor) return;
@@ -312,8 +329,8 @@ export default function App() {
   const sorted = [...tabs].sort((a, b) => (a.example ? 1 : b.example ? -1 : (b.updatedAt || 0) - (a.updatedAt || 0)));
 
   return (
-    <div className={'layout' + (sideOpen ? '' : ' collapsed')}>
-      <aside className="side">
+    <div className={'layout' + (sideOpen ? '' : ' collapsed')} ref={layoutRef}>
+      <aside className="side" ref={sideRef}>
         <div className="sidehead">
           <div className="brand">Tab<i>.</i></div>
           <button className="collapse" title={sideOpen ? 'Collapse sidebar' : 'Expand sidebar'} aria-label={sideOpen ? 'Collapse sidebar' : 'Expand sidebar'} aria-expanded={sideOpen} onClick={() => setSideOpen(o => !o)}>
@@ -392,6 +409,15 @@ export default function App() {
             </>
           )}
           <span className="spacer" />
+          {readOnly && (
+            <span className="seg" role="group" aria-label="Display orientation">
+              {['portrait', 'landscape'].map(o => (
+                <button key={o} className={orient === o ? 'active' : ''} aria-pressed={orient === o} onClick={() => setOrient(o)} title={`Lay out as A4 ${o}`}>
+                  <span className={'page ' + o} />{o[0].toUpperCase() + o.slice(1)}
+                </button>
+              ))}
+            </span>
+          )}
           <span className="play">
             {playPos && <>
               <input type="range" min="2" max="14" step="1" value={tempo} title="Speed: columns per second"
@@ -412,7 +438,7 @@ export default function App() {
           </span>
         </div>
 
-        <div className={'sheet' + (readOnly ? ' readonly' : '')} style={{ width: sheetWidth }}>
+        <div className={'sheet' + (readOnly ? ' readonly' : '')} style={{ width: sheetWidth, '--staff-font': screenFont + 'px', '--sheet-pad': sheetPad + 'px' }}>
           <div className="meta">
             <input ref={titleRef} type="text" id="title" placeholder="Untitled" value={tab.title} readOnly={readOnly}
               onChange={e => mutate(t => { t.title = e.target.value; })} />
@@ -423,10 +449,10 @@ export default function App() {
           </div>
           <div id="editor">
             {tab.lines.map((line, li) => (
-              <Section key={line.id} line={line} li={li} sel={sel} selEnd={selEnd} r={r} readOnly={readOnly} dragLine={dragLine} on={on} printBudget={printBudget} playCol={playPos?.line === li ? playPos.col : -1} />
+              <Section key={line.id} line={line} li={li} sel={sel} selEnd={selEnd} r={r} readOnly={readOnly} dragLine={dragLine} on={on} printBudget={budget} playCol={playPos?.line === li ? playPos.col : -1} />
             ))}
           </div>
-          <div className="pagenote">Laid out as A4 portrait · sections wrap where they will on paper</div>
+          <div className="pagenote">Laid out as A4 {viewOrient} · sections wrap where they will on paper</div>
         </div>
 
       </div>

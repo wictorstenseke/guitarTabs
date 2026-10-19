@@ -8,6 +8,7 @@ export const PRINT_FONT_PX = 10;      // smallest staff font on paper; the layou
 export const PRINT_FONT_MAX = 13.5;   // largest font we'll scale up to when the tab fits the page with room to spare
 export const SCREEN_FONT_PX = 13.5;   // staff font on screen — keep in sync with .line in styles.css
 export const SHEET_PAD_PX = 48;       // .sheet horizontal padding on screen
+export const VIEW_PAD_PX = 24;        // tighter padding used in view mode when the sheet has to shrink to fit
 const FRAME_CH = 3;                   // label "e|" + closing "|"
 
 let chPerPx = null;                   // width of one monospace glyph per 1px of font-size
@@ -35,7 +36,7 @@ export function fitFontPx(orientation, tab) {
 }
 
 // Print with the given orientation: the staff font is scaled to fit the page and rows are re-wrapped for
-// that page width, only for the duration of the print (via `setBudget`); @page size is set so the
+// that page width, only for the duration of the print (via `setBudget`, reset to null after); @page size is set so the
 // browser's dialog preselects the orientation.
 export function printAs(orientation, tab, setBudget) {
   const font = fitFontPx(orientation, tab);
@@ -43,13 +44,19 @@ export function printAs(orientation, tab, setBudget) {
   style.textContent = `@page { size: A4 ${orientation}; } @media print { .line { font-size: ${font}px; } }`;
   document.head.appendChild(style);
   setBudget(pageBudgetCh(orientation, font));
-  const done = () => { style.remove(); setBudget(pageBudgetCh('portrait')); window.removeEventListener('afterprint', done); };
+  const done = () => { style.remove(); setBudget(null); window.removeEventListener('afterprint', done); };
   window.addEventListener('afterprint', done);
   window.print();
 }
 
-// Screen sheet width that holds exactly one full row (plus padding) at the screen font.
-export function sheetWidthPx(budget) { return Math.ceil((budget + FRAME_CH) * glyphRatio() * SCREEN_FONT_PX) + 2 * SHEET_PAD_PX; }
+// Screen sheet width that holds exactly one full row (plus padding) at the given screen font.
+export function sheetWidthPx(budget, fontPx = SCREEN_FONT_PX, pad = SHEET_PAD_PX) { return Math.ceil((budget + FRAME_CH) * glyphRatio() * fontPx) + 2 * pad; }
+
+// Largest screen font (≤ SCREEN_FONT_PX, ¼px steps) at which a full row plus padding fits in `availPx`.
+export function fitScreenFontPx(budget, availPx, pad = SHEET_PAD_PX) {
+  const px = (availPx - 2 * pad) / (glyphRatio() * (budget + FRAME_CH));
+  return Math.max(7, Math.min(SCREEN_FONT_PX, Math.floor(px * 4) / 4));
+}
 
 // Split columns into runs whose summed widths fit the budget. The first run also gives up `noteCh`
 // for the section note shown beside it (only as wide as the text actually entered).

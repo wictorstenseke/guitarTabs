@@ -1,7 +1,7 @@
 import { EXAMPLE_ID, exampleTab } from './seed.js';
 import { ensureLineIds } from './model.js';
 
-const LS_TABS = 'guitartabs:tabs', LS_CUR = 'guitartabs:current', LS_SIDE = 'guitartabs:sidebar';
+const LS_TABS = 'guitartabs:tabs', LS_CUR = 'guitartabs:current', LS_SIDE = 'guitartabs:sidebar', LS_ORIENT = 'guitartabs:orient';
 
 // localStorage can throw (data: URLs, private mode, blocked storage) — fall back to in-memory
 const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -23,6 +23,10 @@ export function saveTabs(tabs, currentId) {
   lsSet(LS_TABS, JSON.stringify(tabs.filter(t => !t.example)));
   lsSet(LS_CUR, currentId);
 }
+
+// view-mode page orientation preference
+export const loadOrient = () => (lsGet(LS_ORIENT) === 'landscape' ? 'landscape' : 'portrait');
+export const saveOrient = o => lsSet(LS_ORIENT, o);
 
 // sidebar open/collapsed preference
 export const loadSideOpen = () => lsGet(LS_SIDE) !== 'closed';
