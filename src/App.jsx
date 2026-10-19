@@ -114,6 +114,7 @@ export default function App() {
     { label: 'Copy link', hint: 'The whole tab lives in the link — anyone can open and save it', run: () => { copyText(shareUrl(tab)); notify('Link copied'); } },
     { label: 'Copy as text', hint: 'Plain ASCII tab for chats, forums, notes', run: () => { copyText(toText(tab)); notify('Copied as text'); } },
     { label: 'Download JSON', hint: 'Just this tab, importable on another device', run: () => { exportJson([tab], tab.title); notify('Downloading…'); } },
+    { label: 'Print…', hint: 'Portrait or landscape, scaled to fill the page', run: () => setPrintOpen(true) },
   ];
   const addTab = () => { const t = newTab(); setTabs(ts => [...ts, t]); switchTab(t.id, true); setTimeout(() => titleRef.current?.focus(), 0); };
   const updateTab = (id, fn) => setTabs(ts => ts.map(t => { if (t.id !== id || t.example) return t; const c = clone(t); fn(c); c.updatedAt = Date.now(); return c; }));
@@ -396,7 +397,7 @@ export default function App() {
             <span className="tempo">{tempo}/s</span>
           </span>
           <span className="sharewrap">
-            <button className={'sharebtn' + (menuFor === SHARE ? ' open' : '')} aria-haspopup="menu" aria-expanded={menuFor === SHARE} onClick={() => setMenuFor(m => m === SHARE ? null : SHARE)}>
+            <button className={'sharebtn primary' + (menuFor === SHARE ? ' open' : '')} aria-haspopup="menu" aria-expanded={menuFor === SHARE} onClick={() => setMenuFor(m => m === SHARE ? null : SHARE)}>
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8M5 5l3-3 3 3M3.5 8.5v4a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-4" /></svg>Share
             </button>
             {menuFor === SHARE && (
@@ -405,7 +406,6 @@ export default function App() {
               </div>
             )}
           </span>
-          <button className="primary" onClick={() => setPrintOpen(true)}>Print</button>
         </div>
 
         <div className={'sheet' + (readOnly ? ' readonly' : '')} style={{ width: sheetWidth }}>
@@ -455,7 +455,7 @@ export default function App() {
           <dt><kbd>⋯</kbd> in the sidebar</dt><dd>Rename, duplicate or delete a tab. The example tab is read-only — duplicate it to edit.</dd>
           <dt>Edit / Save</dt><dd>Tabs open in a clean practice view. Edit switches to editing, Save goes back (everything is saved as you type anyway). New and duplicated tabs open in edit mode.</dd>
           <dt>Autosave</dt><dd>Everything is saved in this browser automatically.</dd>
-          <dt>Share</dt><dd>Copy a link (the whole tab is packed inside — whoever opens it can save it), copy as plain text, or download this tab as JSON.</dd>
+          <dt>Share</dt><dd>Copy a link (the whole tab is packed inside — whoever opens it can save it), copy as plain text, download this tab as JSON, or print.</dd>
           <dt>Export / Import</dt><dd>Back up all tabs to a JSON file, or restore from one. Imported tabs with the same id replace the existing ones.</dd>
           <h4>Playback</h4>
           <dt><kbd>▶ Play</kbd></dt><dd>Plays the tab: every column is one beat at the chosen speed. Technique and bar-line columns take no time; section repeats are ignored.</dd>
