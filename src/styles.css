@@ -89,7 +89,7 @@
   .toolbar .spacer { flex: 1; }
   .toolbar .play { display: flex; align-items: center; gap: 8px; }
   .menu .mh { font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); padding: 8px 10px 3px; }
-  .menu.display { min-width: 210px; }
+  .menu.display { width: 220px; }
   .menu.display .page { display: block; border: 1.2px solid currentColor; border-radius: 1.5px; flex: none; }
   .menu.display .page.portrait { width: 8px; height: 11px; }
   .menu.display .page.landscape { width: 11px; height: 8px; }
@@ -97,18 +97,19 @@
   .menu.display button.active:hover { background: rgba(194,80,42,.18); }
   .menu.display button .ico { margin-left: auto; }
   .menu .zoomrow { display: flex; align-items: stretch; gap: 6px; padding: 4px 6px 6px; }
-  .menu .zoomrow button { flex: 1; height: 44px; padding: 0; justify-content: center; border: 1px solid var(--rule); border-radius: 8px; background: rgba(27,26,23,.04); font-size: 22px; line-height: 1; }
-  .menu .zoomrow button:hover { background: rgba(27,26,23,.1); }
-  .menu .zoomrow button:disabled { opacity: .3; cursor: default; background: transparent; }
+  .toolbar .menu .zoomrow button { flex: 1; height: 46px; padding: 0; justify-content: center; border: 1px solid var(--ink); border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 24px; line-height: 1; }
+  .toolbar .menu .zoomrow button:hover { background: #2e2c27; }
+  .toolbar .menu .zoomrow button:disabled { opacity: .3; cursor: default; }
   .menu .zoomrow .pct { flex: 0 0 5.5ch; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: var(--ink); }
-  .menu.display button.reset { justify-content: center; margin: 0 6px 4px; font-size: 11px; color: var(--ink-soft); border: 1px dashed var(--rule); }
-  .menu.display button.reset:disabled { opacity: .4; cursor: default; background: transparent; }
+  .toolbar .menu.display button.reset { justify-content: center; margin: 0 6px 4px; font-size: 11px; color: var(--ink-soft); border: 1px dashed var(--rule); }
+  .toolbar .menu.display button.reset:disabled { opacity: .4; cursor: default; background: transparent; }
   .toolbar .play input[type=range] { width: 90px; accent-color: var(--accent); }
   .toolbar .tempo { font-size: 11px; color: rgba(246,243,236,.7); min-width: 3ch; }
   .toolbar .ctx { display: flex; gap: 4px; margin-left: 6px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.18); }
   .toolbar .ctx button { border-color: var(--accent); color: #ffd9c9; }
   .toolbar .ctx button:disabled { opacity: .35; cursor: default; }
   .toolbar .badge { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: rgba(246,243,236,.7); padding: 0 4px; }
+  .sheet.readonly { overflow-x: auto; }   /* zoomed staff scrolls inside the sheet */
   .sheet.readonly .cell { cursor: default; }
   .sheet.readonly .cell:hover { background: none; }
   .sheet.readonly .linetools, .sheet.readonly .grip { display: none; }

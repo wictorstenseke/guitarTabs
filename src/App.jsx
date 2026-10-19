@@ -60,8 +60,8 @@ export default function App() {
   if (readOnly && fitScreenFontPx(budget, availW) < SCREEN_FONT_PX) {   // doesn't fit at full size: tighten padding, then shrink the font
     sheetPad = VIEW_PAD_PX; screenFont = fitScreenFontPx(budget, availW, sheetPad);
   }
+  const sheetWidth = sheetWidthPx(budget, screenFont, sheetPad);     // unzoomed: sheet and toolbar stay put, a zoomed staff scrolls inside the sheet
   if (readOnly) screenFont = Math.round(screenFont * zoom * 4) / 4;
-  const sheetWidth = sheetWidthPx(budget, screenFont, sheetPad);
   const sharedExists = !!shared && tabs.some(t => t.id === shared.id);   // saving would replace this device's copy
   const r = rect(sel, selEnd);
 
