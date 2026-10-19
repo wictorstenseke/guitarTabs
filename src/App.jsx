@@ -32,6 +32,7 @@ export default function App() {
   const fileRef = useRef(null);                                     // hidden file input for import
   const [playPos, setPlayPos] = useState(null);                     // { line, col } under the playhead, null when stopped
   const [tempo, setTempo] = useState(6);                            // columns per second
+  const tempoRef = useRef(tempo); tempoRef.current = tempo;         // read live by the player
   const stopRef = useRef(null);                                     // stop() of the current playback
   const sheetWidth = sheetWidthPx(pageBudgetCh('portrait'));   // screen always lays out as portrait
   const helpDlg = useRef(null);
@@ -58,7 +59,7 @@ export default function App() {
   const stopPlay = () => { stopRef.current?.(); stopRef.current = null; setPlayPos(null); };
   const togglePlay = () => {
     if (stopRef.current) { stopPlay(); return; }
-    stopRef.current = play(tab, tempo, setPlayPos, () => { stopRef.current = null; setPlayPos(null); });
+    stopRef.current = play(tab, () => tempoRef.current, setPlayPos, () => { stopRef.current = null; setPlayPos(null); });
   };
   useEffect(() => stopPlay, [currentId, shared]);
   useEffect(() => {  // a share link pasted into an already-open app
@@ -392,9 +393,11 @@ export default function App() {
           <span className="spacer" />
           <span className="play">
             <button onClick={togglePlay} title="Play the tab (technique and bar-line columns take no time)">{playPos ? '■ Stop' : '▶ Play'}</button>
-            <input type="range" min="2" max="14" step="1" value={tempo} title="Speed: columns per second"
-              onChange={e => { setTempo(+e.target.value); }} />
-            <span className="tempo">{tempo}/s</span>
+            {playPos && <>
+              <input type="range" min="2" max="14" step="1" value={tempo} title="Speed: columns per second"
+                onChange={e => { setTempo(+e.target.value); }} />
+              <span className="tempo">{tempo}/s</span>
+            </>}
           </span>
           <span className="sharewrap">
             <button className={'sharebtn primary' + (menuFor === SHARE ? ' open' : '')} aria-haspopup="menu" aria-expanded={menuFor === SHARE} onClick={() => setMenuFor(m => m === SHARE ? null : SHARE)}>
