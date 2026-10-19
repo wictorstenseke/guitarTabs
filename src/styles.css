@@ -87,7 +87,7 @@
     font-family: var(--mono); font-size: 12px;
   }
   .toolbar .spacer { flex: 1; }
-  .toolbar .play { display: flex; align-items: center; gap: 8px; margin-right: 6px; padding-right: 10px; border-right: 1px solid rgba(255,255,255,.18); }
+  .toolbar .play { display: flex; align-items: center; gap: 8px; }
   .toolbar .play input[type=range] { width: 90px; accent-color: var(--accent); }
   .toolbar .tempo { font-size: 11px; color: rgba(246,243,236,.7); min-width: 3ch; }
   .toolbar .ctx { display: flex; gap: 4px; margin-left: 6px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.18); }
@@ -109,7 +109,6 @@
   .toolbar .menu button:hover { background: rgba(27,26,23,.06); }
   .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 20; background: var(--ink); color: var(--paper); font-family: var(--mono); font-size: 12px; padding: 8px 14px; border-radius: 8px; box-shadow: 0 8px 24px -8px rgba(27,26,23,.5); animation: toast .18s ease-out; pointer-events: none; }
   @keyframes toast { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
-  .toolbar button.save { border-color: rgba(255,255,255,.4); }
   .ico { width: 13px; height: 13px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
   .ico .f { fill: currentColor; stroke: none; }
   button {
@@ -123,8 +122,8 @@
   button:active { transform: translateY(1px); }
   button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
   button.primary:hover { background: #d35a31; }
-  .side button.new { width: 100%; background: var(--ink); border-color: var(--ink); }
-  .side button.new:hover { background: #2e2c27; }
+  .side button.new { width: 100%; background: var(--accent); border-color: var(--accent); color: #fff; }
+  .side button.new:hover { background: #d35a31; }
 
   /* sheet */
   .sheet {

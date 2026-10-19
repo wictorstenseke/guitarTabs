@@ -377,7 +377,7 @@ export default function App() {
             <button className="primary" onClick={() => { setEditing(true); resetSel(); }}>Edit</button>
           ) : (
             <>
-              <button className="save" onClick={() => { setEditing(false); setSelEnd(null); }} title="Back to the practice view (changes are saved as you type)">
+              <button className="primary" onClick={() => { setEditing(false); setSelEnd(null); }} title="Back to the practice view (changes are saved as you type)">
                 Save
               </button>
               <button onClick={() => addLineAfter(tab.lines.length - 1)}>+ New section</button>
