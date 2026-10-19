@@ -374,15 +374,15 @@ export default function App() {
               <button className="primary" onClick={() => dupTab()}><Icon name="copy" />Duplicate to edit</button>
             </>
           ) : !editing ? (
-            <button className="primary" onClick={() => { setEditing(true); resetSel(); }}><Icon name="pencil" />Edit</button>
+            <button className="primary" onClick={() => { setEditing(true); resetSel(); }}>Edit</button>
           ) : (
             <>
               <button className="save" onClick={() => { setEditing(false); setSelEnd(null); }} title="Back to the practice view (changes are saved as you type)">
-                <Icon name="check" />Save
+                Save
               </button>
-              <button onClick={() => addLineAfter(tab.lines.length - 1)}><Icon name="plus" />New section</button>
-              <button onClick={trimEnds} title="Remove trailing dashes (never changes timing)"><Icon name="scissors" />Trim ends</button>
-              <button onClick={askFixSpacing} title="Insert a dash between touching notes (may shift timing)"><Icon name="spacing" />Fix spacing</button>
+              <button onClick={() => addLineAfter(tab.lines.length - 1)}>+ New section</button>
+              <button onClick={trimEnds} title="Remove trailing dashes (never changes timing)">Trim ends</button>
+              <button onClick={askFixSpacing} title="Insert a dash between touching notes (may shift timing)">Fix spacing</button>
               {fullCols && (
                 <span className="ctx">
                   <button onClick={shiftLeft} disabled={!canShiftLeft} title="Remove one blank column before the selection"><Icon name="left" />Pull in</button>
@@ -393,12 +393,12 @@ export default function App() {
           )}
           <span className="spacer" />
           <span className="play">
-            <button onClick={togglePlay} title="Play the tab (technique and bar-line columns take no time)">{playPos ? <><Icon name="stop" />Stop</> : <><Icon name="play" />Play</>}</button>
             {playPos && <>
               <input type="range" min="2" max="14" step="1" value={tempo} title="Speed: columns per second"
                 onChange={e => { setTempo(+e.target.value); }} />
               <span className="tempo">{tempo}/s</span>
             </>}
+            <button onClick={togglePlay} title="Play the tab (technique and bar-line columns take no time)">{playPos ? <><Icon name="stop" />Stop</> : <><Icon name="play" />Play</>}</button>
           </span>
           <span className="sharewrap">
             <button className={'sharebtn primary' + (menuFor === SHARE ? ' open' : '')} aria-haspopup="menu" aria-expanded={menuFor === SHARE} onClick={() => setMenuFor(m => m === SHARE ? null : SHARE)}>
