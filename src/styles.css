@@ -97,8 +97,8 @@
   .menu.display button.active:hover { background: rgba(194,80,42,.18); }
   .menu.display button .ico { margin-left: auto; }
   .menu .zoomrow { display: flex; align-items: stretch; gap: 6px; padding: 4px 6px 6px; }
-  .toolbar .menu .zoomrow button { flex: 1; height: 46px; padding: 0; justify-content: center; border: 1px solid var(--ink); border-radius: 8px; background: var(--ink); color: var(--paper); font-size: 24px; line-height: 1; }
-  .toolbar .menu .zoomrow button:hover { background: #2e2c27; }
+  .toolbar .menu .zoomrow button { flex: 1; height: 46px; padding: 0; justify-content: center; border: 1px solid #d6d0c3; border-radius: 8px; background: var(--paper); color: var(--ink); font-size: 22px; line-height: 1; }
+  .toolbar .menu .zoomrow button:hover { background: #efebe2; border-color: #c4bdae; }
   .toolbar .menu .zoomrow button:disabled { opacity: .3; cursor: default; }
   .menu .zoomrow .pct { flex: 0 0 5.5ch; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: var(--ink); }
   .toolbar .menu.display button.reset { justify-content: center; margin: 0 6px 4px; font-size: 11px; color: var(--ink-soft); border: 1px dashed var(--rule); }
