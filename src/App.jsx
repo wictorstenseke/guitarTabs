@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { pageBudgetCh, printAs, resetMeasure, sheetWidthPx } from './print.js';
-import { BAR, STRINGS, clone, colWidth, copyText, duplicateTab, emptyCol, emptyLine, ensureRunway, fixSpacing, hasNote, isTech, moveLine, newTab, rect, setCell, toText, trimLines, validNote } from './model.js';
+import { BAR, STRINGS, clone, cloneLine, colWidth, copyText, duplicateTab, emptyCol, emptyLine, ensureRunway, fixSpacing, hasNote, isTech, moveLine, newTab, rect, setCell, toText, trimLines, validNote } from './model.js';
 import { exportJson, loadTabs, mergeTabs, parseImport, saveTabs } from './storage.js';
 import { play } from './audio.js';
+import { clearHash, shareUrl, tabFromHash } from './share.js';
 import Section from './Section.jsx';
 
 const initial = loadTabs();
@@ -11,6 +12,7 @@ const initial = loadTabs();
 export default function App() {
   const [tabs, setTabs] = useState(initial.tabs);
   const [currentId, setCurrentId] = useState(initial.currentId);
+  const [shared, setShared] = useState(() => tabFromHash());        // tab opened from a share link, shown read-only until saved
   const [sel, setSel] = useState({ line: 0, string: 0, col: 0 });   // cursor / selection anchor
   const [selEnd, setSelEnd] = useState(null);                       // {string, col} on same line, or null
   const [dragLine, setDragLine] = useState(null);                   // section index being dragged
@@ -34,8 +36,9 @@ export default function App() {
   const dlg = useRef(null);
   const titleRef = useRef(null);
 
-  const tab = tabs.find(t => t.id === currentId) || tabs[0];
-  const readOnly = !!tab.example;
+  const tab = shared || tabs.find(t => t.id === currentId) || tabs[0];
+  const readOnly = !!tab.example || !!shared;
+  const sharedExists = !!shared && tabs.some(t => t.id === shared.id);   // saving would replace this device's copy
   const r = rect(sel, selEnd);
 
   useEffect(() => { saveTabs(tabs, currentId); }, [tabs, currentId]);
@@ -50,7 +53,11 @@ export default function App() {
     if (stopRef.current) { stopPlay(); return; }
     stopRef.current = play(tab, tempo, setPlayPos, () => { stopRef.current = null; setPlayPos(null); });
   };
-  useEffect(() => stopPlay, [currentId]);   // switching tabs (or unmount) stops playback
+  useEffect(() => stopPlay, [currentId, shared]);
+  useEffect(() => {  // a share link pasted into an already-open app
+    const h = () => { const t = tabFromHash(); if (t) { setShared(t); resetSel(); } };
+    window.addEventListener('hashchange', h); return () => window.removeEventListener('hashchange', h);
+  }, []);   // switching tabs (or unmount) stops playback
   const importFile = async file => {
     if (!file) return;
     try {
@@ -87,7 +94,18 @@ export default function App() {
   const placeAt = (line, string = 0, col = 0) => { setSel({ line, string, col }); setSelEnd(null); };
 
   // ---------- tabs ----------
-  const switchTab = id => { setCurrentId(id); resetSel(); };
+  const switchTab = id => { setCurrentId(id); resetSel(); if (shared) { setShared(null); clearHash(); } };
+  const saveShared = () => {
+    const t = { ...shared, updatedAt: Date.now() };
+    setTabs(ts => mergeTabs(ts, [t])); setShared(null); clearHash(); setCurrentId(t.id); resetSel();
+  };
+  const askSaveShared = () => sharedExists
+    ? setConfirm({ title: 'Replace your copy?', text: `You already have “${shared.title || 'Untitled'}”. Saving replaces it with this shared version.`, label: 'Replace', run: saveShared })
+    : saveShared();
+  const share = () => {
+    const url = shareUrl(tab); copyText(url);
+    setConfirm({ title: 'Link copied', text: `Anyone who opens it sees this tab and can save it to their own tabs. The whole tab lives in the link (${url.length.toLocaleString()} characters), so it keeps working forever.`, label: 'OK', run: () => {} });
+  };
   const addTab = () => { const t = newTab(); setTabs(ts => [...ts, t]); switchTab(t.id); setTimeout(() => titleRef.current?.focus(), 0); };
   const updateTab = (id, fn) => setTabs(ts => ts.map(t => { if (t.id !== id || t.example) return t; const c = clone(t); fn(c); c.updatedAt = Date.now(); return c; }));
   const dupTab = (src = tab) => { const t = duplicateTab(src); setTabs(ts => [...ts, t]); switchTab(t.id); };
@@ -103,7 +121,7 @@ export default function App() {
     mutate(t => { t.lines.splice(li, 1); if (!t.lines.length) t.lines.push(emptyLine()); });
     placeAt(Math.min(li, Math.max(0, n - 2)));
   };
-  const duplicateLine = li => { mutate(t => t.lines.splice(li + 1, 0, clone(t.lines[li]))); placeAt(li + 1); };
+  const duplicateLine = li => { mutate(t => t.lines.splice(li + 1, 0, cloneLine(t.lines[li]))); placeAt(li + 1); };
   const dropLine = (li, below) => {
     const from = dragLine; setDragLine(null);
     if (from === null) return;
@@ -289,7 +307,7 @@ export default function App() {
         <div className="section">Tabs</div>
         <div className="tablist">
           {sorted.map(t => (
-            <div key={t.id} className={'tabitem' + (t.id === tab.id ? ' active' : '') + (menuFor === t.id ? ' open' : '')}
+            <div key={t.id} className={'tabitem' + (!shared && t.id === tab.id ? ' active' : '') + (menuFor === t.id ? ' open' : '')}
               onClick={() => { if (renaming !== t.id) switchTab(t.id); }}>
               {renaming === t.id ? (
                 <input className="rename" autoFocus defaultValue={t.title} placeholder="Untitled"
@@ -324,7 +342,13 @@ export default function App() {
 
       <div className="main">
         <div className="toolbar" style={{ width: sheetWidth }}>
-          {readOnly ? (
+          {shared ? (
+            <>
+              <span className="badge">Shared with you</span>
+              <button className="primary" onClick={askSaveShared}>{sharedExists ? 'Replace my copy' : 'Save to my tabs'}</button>
+              <button onClick={() => switchTab(currentId)}>Dismiss</button>
+            </>
+          ) : readOnly ? (
             <>
               <span className="badge">Example · read-only</span>
               <button className="primary" onClick={() => dupTab()}>Duplicate to edit</button>
@@ -350,6 +374,7 @@ export default function App() {
             <span className="tempo">{tempo}/s</span>
           </span>
           <button onClick={() => copyText(toText(tab))}>Copy text</button>
+          <button onClick={share} title="Copy a link that contains this whole tab">Share</button>
           <button className="primary" onClick={() => setPrintOpen(true)}>Print</button>
         </div>
 
@@ -364,7 +389,7 @@ export default function App() {
           </div>
           <div id="editor">
             {tab.lines.map((line, li) => (
-              <Section key={li} line={line} li={li} sel={sel} selEnd={selEnd} r={r} readOnly={readOnly} dragLine={dragLine} on={on} printBudget={printBudget} playCol={playPos?.line === li ? playPos.col : -1} />
+              <Section key={line.id} line={line} li={li} sel={sel} selEnd={selEnd} r={r} readOnly={readOnly} dragLine={dragLine} on={on} printBudget={printBudget} playCol={playPos?.line === li ? playPos.col : -1} />
             ))}
           </div>
           <div className="pagenote">Laid out as A4 portrait · sections wrap where they will on paper</div>
@@ -397,6 +422,7 @@ export default function App() {
           <h4>Tabs</h4>
           <dt><kbd>⋯</kbd> in the sidebar</dt><dd>Rename, duplicate or delete a tab. The example tab is read-only — duplicate it to edit.</dd>
           <dt>Autosave</dt><dd>Everything is saved in this browser automatically.</dd>
+          <dt>Share</dt><dd>Copies a link with the whole tab packed inside. Whoever opens it can save it to their own tabs.</dd>
           <dt>Export / Import</dt><dd>Back up all tabs to a JSON file, or restore from one. Imported tabs with the same id replace the existing ones.</dd>
           <h4>Playback</h4>
           <dt><kbd>▶ Play</kbd></dt><dd>Plays the tab: every column is one beat at the chosen speed. Technique and bar-line columns take no time; section repeats are ignored.</dd>

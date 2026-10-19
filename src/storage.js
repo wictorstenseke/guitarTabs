@@ -1,4 +1,5 @@
 import { EXAMPLE_ID, exampleTab } from './seed.js';
+import { ensureLineIds } from './model.js';
 
 const LS_TABS = 'guitartabs:tabs', LS_CUR = 'guitartabs:current';
 
@@ -10,7 +11,7 @@ export function loadTabs() {
   let tabs = [];
   try { tabs = JSON.parse(lsGet(LS_TABS)) || []; } catch { tabs = []; }
   // migrate old numeric repeat -> free-text note
-  tabs.forEach(t => t.lines.forEach(l => { if (l.note === undefined) { l.note = l.repeat > 1 ? 'x' + l.repeat : ''; delete l.repeat; } }));
+  tabs.forEach(t => { t.lines.forEach(l => { if (l.note === undefined) { l.note = l.repeat > 1 ? 'x' + l.repeat : ''; delete l.repeat; } }); ensureLineIds(t); });
   // the example is always present and always pristine
   tabs = [exampleTab(), ...tabs.filter(t => t.id !== EXAMPLE_ID)];
   const cur = lsGet(LS_CUR);
@@ -41,8 +42,8 @@ export function parseImport(text) {
   if (!ok.length) throw new Error('No valid tabs found in this file.');
   return ok.map(t => ({
     ...t, title: t.title || '', artist: t.artist || '', example: false, updatedAt: t.updatedAt || Date.now(),
-    lines: t.lines.map(l => ({ cols: l.cols, note: l.note ?? '' })),
-  }));
+    lines: t.lines.map(l => ({ id: l.id, cols: l.cols, note: l.note ?? '' })),
+  })).map(ensureLineIds);
 }
 
 // Merge: an imported tab replaces the existing one with the same id, the rest are appended.

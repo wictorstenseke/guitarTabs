@@ -1,11 +1,14 @@
-// Pure data helpers. A tab is { id, title, artist, lines:[{ cols:[[6 strings]], note }], updatedAt, example? }
+// Pure data helpers. A tab is { id, title, artist, lines:[{ id, cols:[[6 strings]], note }], updatedAt, example? }
 export const STRINGS = ['e', 'B', 'G', 'D', 'A', 'E'];
 export const START_COLS = 8;   // new section starts this wide, grows as you type
 export const TAIL = 3;         // empty cols kept after last note when trimming
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 export const emptyCol = () => Array(STRINGS.length).fill('');
-export const emptyLine = () => ({ cols: Array.from({ length: START_COLS }, emptyCol), note: '' });
+export const emptyLine = () => ({ id: uid(), cols: Array.from({ length: START_COLS }, emptyCol), note: '' });
+export const cloneLine = l => ({ ...clone(l), id: uid() });
+// Give every line an id (older saves, imports and shared links may lack them). Mutates and returns the tab.
+export const ensureLineIds = t => { t.lines.forEach(l => { if (!l.id) l.id = uid(); }); return t; };
 export const newTab = () => ({ id: uid(), title: '', artist: '', lines: [emptyLine()], updatedAt: Date.now() });
 export const clone = x => JSON.parse(JSON.stringify(x));
 export const hasNote = c => c.some(n => n);
