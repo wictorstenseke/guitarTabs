@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tab Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f6f3ec;
+    --sheet: #fffdf8;
+    --ink: #1b1a17;
+    --ink-soft: #6d685e;
+    --dash: #55514a;
+    --rule: #e4ded1;
+    --accent: #c2502a;
+    --sel: #ffe8a8;
+    --range: #fff3cf;
+    --side: #ecE7dc;
+    --mono: 'Roboto Mono', ui-monospace, Menlo, monospace;
+    --serif: 'Fraunces', Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--serif);
+    background-image: radial-gradient(circle at 1px 1px, rgba(27,26,23,.045) 1px, transparent 0);
+    background-size: 18px 18px;
+  }
+  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100%; }
+
+  /* sidebar */
+  .side {
+    background: var(--side); border-right: 1px solid var(--rule);
+    padding: 20px 14px; display: flex; flex-direction: column; gap: 14px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .side .brand { font-size: 22px; font-weight: 600; padding: 0 6px; }
+  .side .brand i { color: var(--accent); font-style: normal; }
+  .side .section { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); padding: 8px 6px 2px; }
+  .tablist { display: flex; flex-direction: column; gap: 2px; }
+  .tabitem {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; cursor: pointer;
+    font-size: 14.5px; line-height: 1.2; color: var(--ink); transition: background .1s;
+  }
+  .tabitem:hover { background: rgba(27,26,23,.06); }
+  .tabitem.active { background: var(--sheet); box-shadow: 0 1px 2px rgba(27,26,23,.12); }
+  .tabitem .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tabitem .name.untitled { font-style: italic; color: var(--ink-soft); }
+  .tabitem .artist { font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); display: block; margin-top: 2px; }
+  .tabitem .x { opacity: 0; border: 0; background: transparent; color: var(--ink-soft); padding: 2px 5px; font-size: 14px; line-height: 1; border-radius: 4px; }
+  .tabitem:hover .x { opacity: .7; }
+  .tabitem .x:hover { opacity: 1; background: rgba(194,80,42,.15); color: var(--accent); }
+
+  /* main */
+  .main { padding: 28px 40px 80px; max-width: 1120px; width: 100%; margin: 0 auto; }
+  .toolbar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    background: var(--ink); color: var(--paper);
+    padding: 10px 12px; border-radius: 10px; margin-bottom: 22px;
+    box-shadow: 0 8px 24px -12px rgba(27,26,23,.5);
+    font-family: var(--mono); font-size: 12px;
+  }
+  .toolbar .spacer { flex: 1; }
+  button {
+    font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .02em;
+    padding: 7px 12px; border-radius: 6px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); color: var(--paper);
+    transition: background .12s, transform .08s;
+  }
+  button:hover { background: rgba(255,255,255,.14); }
+  button:active { transform: translateY(1px); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { background: #d35a31; }
+  .side button.new { width: 100%; background: var(--ink); border-color: var(--ink); }
+  .side button.new:hover { background: #2e2c27; }
+
+  /* sheet */
+  .sheet {
+    background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px;
+    padding: 44px 48px 48px; overflow-x: auto;
+    box-shadow: 0 1px 0 #fff inset, 0 20px 40px -30px rgba(27,26,23,.35);
+  }
+  .meta { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; border-bottom: 2px solid var(--ink); padding-bottom: 14px; margin-bottom: 36px; }
+  .meta input { font-family: var(--serif); border: 0; background: transparent; color: var(--ink); outline: 0; padding: 0; width: 100%; }
+  .meta input::placeholder { color: #c9c2b2; font-style: italic; }
+  #title { font-size: 34px; font-weight: 600; letter-spacing: -.01em; line-height: 1.1; }
+  #artist { font-size: 16px; font-style: italic; color: var(--ink-soft); text-align: right; }
+  .meta .artist-wrap { flex: 0 0 280px; }
+
+  /* staff — tight ASCII look */
+  .line { margin-bottom: 22px; font-family: var(--mono); font-size: 13.5px; line-height: 1.3; position: relative; width: max-content; user-select: none; }
+  .row { display: flex; align-items: center; height: 1.3em; white-space: pre; }
+  .label { color: var(--ink-soft); }
+  .bar { color: var(--ink); }
+  .cell { width: calc(var(--w) * 1ch); text-align: center; cursor: pointer; color: var(--dash); border-radius: 2px; }
+  .cell:hover { background: rgba(27,26,23,.08); }
+  .cell.note { color: var(--ink); }
+  .cell.range { background: var(--range); color: var(--ink); }
+  .cell.sel { background: var(--sel); box-shadow: 0 0 0 1px var(--accent); color: var(--ink); border-radius: 2px; }
+  .repeat { margin-left: 1ch; color: var(--ink-soft); }
+  .repeat input { font: inherit; min-width: 8ch; border: 0; border-bottom: 1px dashed transparent; background: transparent; color: var(--ink); outline: 0; padding: 0; }
+  .repeat input::placeholder { color: transparent; }
+  .line:hover .repeat input, .repeat input:focus { border-bottom-color: var(--rule); }
+  .line:hover .repeat input::placeholder, .repeat input:focus::placeholder { color: #c9c2b2; }
+  .linetools { margin-left: 2ch; display: flex; gap: 4px; opacity: 0; transition: opacity .25s ease 1.5s; }
+  .line:hover .linetools, .linetools:hover, .line:focus-within .linetools { opacity: 1; transition-delay: 0s; }
+  .linetools button { white-space: nowrap; padding: 2px 7px; font-size: 11px; background: transparent; color: var(--ink-soft); border-color: var(--rule); }
+  .linetools button:hover { color: var(--accent); background: rgba(194,80,42,.08); }
+  .grip { position: absolute; right: 100%; top: 50%; transform: translateY(-50%); margin-right: 10px; cursor: grab; padding: 4px 5px; font-size: 12px; letter-spacing: -2px; user-select: none; background: transparent; color: var(--ink-soft); border-color: var(--rule); opacity: 0; transition: opacity .25s ease 1.5s; }
+  .line:hover .grip, .grip:hover, .line:focus-within .grip { opacity: 1; transition-delay: 0s; }
+  .grip:hover { color: var(--accent); background: rgba(194,80,42,.08); }
+  .grip:active { cursor: grabbing; }
+  .line.dragging { opacity: .35; }
+  .line.drop-above::before, .line.drop-below::after { content: ''; position: absolute; left: 0; right: 0; border-top: 2px solid var(--accent); }
+  .line.drop-above::before { top: -12px; }
+  .line.drop-below::after { bottom: -12px; }
+
+  .newsection::before, .newsection::after { content: ''; flex: 1; border-top: 1px dashed var(--rule); }
+
+  .help { margin-top: 18px; color: var(--ink-soft); font-size: 12.5px; font-family: var(--mono); line-height: 1.8; text-align: center; }
+  kbd { background: #fff; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-size: 11px; }
+
+  /* confirm dialog */
+  dialog { border: 0; border-radius: 10px; padding: 22px 24px; background: var(--sheet); color: var(--ink); box-shadow: 0 30px 60px -20px rgba(27,26,23,.5); min-width: 320px; }
+  dialog::backdrop { background: rgba(27,26,23,.35); }
+  dialog h3 { margin: 0 0 6px; font-size: 18px; font-weight: 600; }
+  dialog p { margin: 0 0 18px; color: var(--ink-soft); font-size: 14px; }
+  dialog .actions { display: flex; justify-content: flex-end; gap: 8px; }
+  dialog button { background: transparent; color: var(--ink); border-color: var(--rule); }
+  dialog button:hover { background: rgba(27,26,23,.06); }
+  dialog button.danger { background: var(--accent); border-color: var(--accent); color: #fff; }
+  dialog button.danger:hover { background: #d35a31; }
+
+  /* print */
+  @media print {
+    @page { margin: 16mm; }
+    body { background: #fff; color: #000; }
+    .layout { display: block; }
+    .side, .toolbar, .help, .linetools, .grip { display: none !important; }
+    .main { max-width: none; margin: 0; padding: 0; }
+    .sheet { border: 0; box-shadow: none; padding: 0; border-radius: 0; overflow: visible; }
+    .meta { border-color: #000; margin-bottom: 24px; }
+    .line { break-inside: avoid; page-break-inside: avoid; }
+    .cell, .cell.note, .label, .bar { color: #000; }
+    .cell.sel, .cell.range { background: none !important; box-shadow: none !important; }
+    .cell:hover { background: none; }
+    .repeat input { border: 0; color: #000; }
+    .repeat input:placeholder-shown { display: none; }
+    .repeat input::placeholder { color: transparent !important; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <div class="brand">Tab<i>.</i></div>
+    <button class="new" id="new">+ New tab</button>
+    <div class="section">Recent</div>
+    <div class="tablist" id="tablist"></div>
+  </aside>
+
+  <div class="main">
+    <div class="toolbar">
+      <button id="newsection">+ New section</button>
+      <button id="trim" title="Remove trailing dashes (never changes timing)">Trim ends</button>
+      <span class="spacer"></span>
+      <button id="copy">Copy text</button>
+      <button id="print" class="primary">Print</button>
+    </div>
+
+    <div class="sheet">
+      <div class="meta">
+        <input type="text" id="title" placeholder="Untitled">
+        <div class="artist-wrap"><input type="text" id="artist" placeholder="Artist"></div>
+      </div>
+      <div id="editor"></div>
+    </div>
+
+    <div class="help">
+      Click a dash, type the fret (0–24, two digits auto-join) · drag or <kbd>Shift</kbd>+arrows to select cells ·
+      <kbd>⌘C</kbd> <kbd>⌘X</kbd> <kbd>⌘V</kbd> copy / cut / paste at cursor ·
+      <kbd>Space</kbd> next · <kbd>Enter</kbd> new section below · <kbd>Backspace</kbd> clear ·
+      <kbd>Insert</kbd> / <kbd>Shift+Del</kbd> add/remove column · hover a section for repeat / delete · drag <kbd>⋮⋮</kbd> to reorder · autosaves locally
+    </div>
+  </div>
+</div>
+
+<dialog id="confirm">
+  <h3 id="confirmTitle">Delete tab?</h3>
+  <p id="confirmText"></p>
+  <div class="actions">
+    <button id="confirmNo">Cancel</button>
+    <button id="confirmYes" class="danger">Delete</button>
+  </div>
+</dialog>
+
+<script>
+const STRINGS = ['e','B','G','D','A','E'];
+const START_COLS = 8;     // new section starts this wide, grows as you type
+const TAIL = 3;           // empty cols kept after last note when trimming
+const LS_TABS = 'guitartabs:tabs', LS_CUR = 'guitartabs:current';
+
+let tabs = [], tab = null;
+let sel = { line:0, string:0, col:0 };   // cursor / selection anchor
+let selEnd = null;                        // {string, col} on same line, or null
+let lastTyped = null;
+let clip = null;                          // internal clipboard: array[rows][cols] of notes
+let dragging = false;
+let dragLine = null;                      // index of section being dragged for reorder
+
+const uid = () => Math.random().toString(36).slice(2,10);
+const emptyCol = () => Array(STRINGS.length).fill('');
+const emptyLine = () => ({ cols: Array.from({length: START_COLS}, emptyCol), note: '' });
+const newTab = () => ({ id: uid(), title:'', artist:'', lines:[emptyLine()], updatedAt: Date.now() });
+const hasNote = c => c.some(n => n);
+// starter tab shown on first run (no saved tabs yet)
+const SEED_LINES = [{"cols":[["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","9","","","",""],["","","","","",""],["","9","","","",""],["","","","","",""],["","9","","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","9","","","",""],["","","","","",""],["7","","","","",""],["","","4","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","5","","","",""],["","","","","",""],["","","4","","",""],["","","","","",""],["","","","6","",""],["","","","","",""],["","","6","","",""],["","","","","",""],["","","8","","",""],["","","","","",""],["","","7","","",""],["","","","","",""],["","","6","","",""],["","","","","",""],["","","","","",""],["","","","9","",""],["","","9","","",""],["","9","","","",""],["9","","","","",""],["","","","","",""],["5","","","","",""],["","","","","",""],["7","","","","",""],["","","","","",""],["4","","","","",""],["","5","","","",""],["","","","","",""],["","7","","","",""],["","","8","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","5","","","",""],["","","","","",""],["","","4","","",""],["","","","","",""],["","","","6","",""],["","","","","",""],["","","6","","",""],["","","","","",""],["","","8","","",""],["","","","","",""],["","","7","","",""],["","","","","",""],["","","6","","",""],["","","","","",""],["","","","","",""],["","","","9","",""],["","","9","","",""],["","9","","","",""],["9","","","","",""],["","","","","",""],["5","","","","",""],["","","","","",""],["7","","","","",""],["","","","","",""],["4","","","","",""],["","5","","","",""],["","","","","",""],["","7","","","",""],["","","8","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""]],"note":""},{"cols":[["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","12","","","",""],["","","","","",""],["","11","","","",""],["","","","","",""],["","10","","","",""],["","","12","","",""],["","","","","",""],["","9","","","",""],["","","","9","",""],["","","","","",""],["","","","11","",""],["","","9","","",""],["","","","11","",""],["","","9","","",""],["","","","","",""],["","","11","","",""],["","","","","",""],["","12","","","",""],["","","","","",""],["","11","","","",""],["","","","","",""],["","10","","","",""],["","","12","","",""],["","","","","",""],["","9","","","",""],["","","","","",""],["12","","","","",""],["","","","","",""],["12","","","","",""],["","","","","",""],["12","","","","",""],["","","","","",""],["","12","","","",""],["","","","","",""],["","11","","","",""],["","","","","",""],["","10","","","",""],["","","12","","",""],["","","","","",""],["","9","","","",""],["","","","9","",""],["","","","","",""],["","","","11","",""],["","","9","","",""],["","","","11","",""],["","","9","","",""],["","","","","",""],["","","11","","",""],["","","","","",""],["","","12","","",""],["","","","","",""],["","","11","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""]],"note":""},{"cols":[["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","7","","","",""],["","","","","",""],["","9","","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","","","11","",""],["","","","","",""],["","","","9","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","7","","","",""],["","","","","",""],["","9","","","",""],["","","","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","7","","","",""],["","","","","",""],["","9","","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","","","11","",""],["","","","","",""],["","","","9","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","9","","","",""],["","","","","",""],["","9","","","",""],["","","","","",""],["","9","","","",""],["","","","","",""],["","","9","","",""],["","","","","",""],["","9","","","",""],["","","","","",""],["7","","","","",""],["","","4","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""],["","","","","",""]],"note":""}];
+const seedTab = () => ({ id: uid(), title:'Super Mario', artist:'WS', lines: JSON.parse(JSON.stringify(SEED_LINES)), updatedAt: Date.now() });
+
+// ---------- storage ----------
+// localStorage can throw (data: URLs, private mode, blocked storage) — fall back to in-memory
+const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+function load() {
+  try { tabs = JSON.parse(lsGet(LS_TABS)) || []; } catch { tabs = []; }
+  if (!tabs.length) tabs.push(seedTab());
+  // migrate old numeric repeat -> free-text note
+  tabs.forEach(t => t.lines.forEach(l => { if (l.note === undefined) { l.note = l.repeat > 1 ? 'x' + l.repeat : ''; delete l.repeat; } }));
+  const cur = lsGet(LS_CUR);
+  tab = tabs.find(t => t.id === cur) || tabs[0];
+}
+function save(touch = true) {
+  if (touch) tab.updatedAt = Date.now();
+  lsSet(LS_TABS, JSON.stringify(tabs));
+  lsSet(LS_CUR, tab.id);
+}
+
+// ---------- selection helpers ----------
+function rect() {
+  const e = selEnd || { string: sel.string, col: sel.col };
+  return {
+    line: sel.line,
+    s0: Math.min(sel.string, e.string), s1: Math.max(sel.string, e.string),
+    c0: Math.min(sel.col, e.col),       c1: Math.max(sel.col, e.col),
+  };
+}
+const inRect = (r, li, si, ci) => li === r.line && si >= r.s0 && si <= r.s1 && ci >= r.c0 && ci <= r.c1;
+
+// ---------- render ----------
+const editor = document.getElementById('editor');
+const colWidth = col => Math.max(1, ...col.map(n => n.length));
+
+function render() {
+  document.getElementById('title').value = tab.title;
+  document.getElementById('artist').value = tab.artist;
+  document.title = (tab.title || 'Untitled') + ' · Tab';
+  renderTabList();
+  editor.innerHTML = '';
+  const r = rect();
+  tab.lines.forEach((line, li) => {
+    const widths = line.cols.map(colWidth);
+    const div = document.createElement('div'); div.className = 'line';
+    STRINGS.forEach((name, si) => {
+      const row = document.createElement('div'); row.className = 'row';
+      const label = document.createElement('span'); label.className = 'label'; label.textContent = name;
+      const open = document.createElement('span'); open.className = 'bar'; open.textContent = '|';
+      row.append(label, open);
+      line.cols.forEach((col, ci) => {
+        const note = col[si], w = widths[ci];
+        const cell = document.createElement('span');
+        cell.className = 'cell' + (note ? ' note' : '');
+        cell.style.setProperty('--w', w);
+        if (selEnd && inRect(r, li, si, ci)) {
+          cell.classList.add('range');
+          const T = si === r.s0, B = si === r.s1, L = ci === r.c0, R = ci === r.c1, a = 'var(--accent)';
+          const sh = [];
+          if (T) sh.push(`inset 0 1px 0 ${a}`); if (B) sh.push(`inset 0 -1px 0 ${a}`);
+          if (L) sh.push(`inset 1px 0 0 ${a}`); if (R) sh.push(`inset -1px 0 0 ${a}`);
+          cell.style.boxShadow = sh.join(',');
+          cell.style.borderRadius = `${T&&L?3:0}px ${T&&R?3:0}px ${B&&R?3:0}px ${B&&L?3:0}px`;
+        } else if (li === sel.line && si === sel.string && ci === sel.col) cell.classList.add('sel');
+        cell.textContent = note || '-'.repeat(w);
+        cell.onmousedown = e => {
+          e.preventDefault();
+          if (e.shiftKey && sel.line === li) { selEnd = { string: si, col: ci }; }
+          else { sel = { line: li, string: si, col: ci }; selEnd = null; dragging = true; }
+          lastTyped = null; render();
+        };
+        cell.onmouseenter = () => {
+          if (!dragging || li !== sel.line) return;
+          const next = { string: si, col: ci };
+          if (next.string === sel.string && next.col === sel.col) { if (selEnd) { selEnd = null; render(); } return; }
+          selEnd = next; render();
+        };
+        row.appendChild(cell);
+      });
+      const close = document.createElement('span'); close.className = 'bar'; close.textContent = '|';
+      row.appendChild(close);
+      if (si === 3) {  // repeat marker on the D row, like "| x2"
+        const rep = document.createElement('span'); rep.className = 'repeat';
+        const inp = document.createElement('input');
+        inp.placeholder = 'x2, chorus…'; inp.value = line.note || '';
+        inp.title = 'Section note (repeat count, name, anything)';
+        const fit = () => { inp.style.width = Math.max(8, (inp.value || inp.placeholder).length + 1) + 'ch'; };
+        fit();
+        inp.oninput = () => { line.note = inp.value; fit(); save(false); };
+        inp.onchange = () => { save(); renderTabList(); };
+        inp.onkeydown = e => { if (e.key === 'Enter' || e.key === 'Escape') inp.blur(); e.stopPropagation(); };
+        rep.appendChild(inp); row.appendChild(rep);
+      }
+      if (si === 0) {  // section tools sit right after the top row
+        const tools = document.createElement('div'); tools.className = 'linetools';
+        const dup = document.createElement('button'); dup.textContent = 'duplicate'; dup.onclick = () => duplicateLine(li);
+        const del = document.createElement('button'); del.textContent = 'delete section'; del.onclick = () => deleteLine(li);
+        tools.append(dup, del);
+        row.appendChild(tools);
+      }
+      div.appendChild(row);
+    });
+    const grip = document.createElement('button'); grip.className = 'grip'; grip.textContent = '⋮⋮'; grip.title = 'Drag to reorder';
+    grip.draggable = true;
+    grip.ondragstart = e => { dragLine = li; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(li)); div.classList.add('dragging'); };
+    grip.ondragend = () => { dragLine = null; clearDropMarks(); };
+    div.appendChild(grip);
+    div.ondragover = e => {
+      if (dragLine === null) return;
+      e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+      const below = e.clientY > div.getBoundingClientRect().top + div.offsetHeight / 2;
+      clearDropMarks(); div.classList.add(below ? 'drop-below' : 'drop-above');
+    };
+    div.ondragleave = e => { if (!div.contains(e.relatedTarget)) div.classList.remove('drop-above', 'drop-below'); };
+    div.ondrop = e => {
+      if (dragLine === null) return;
+      e.preventDefault();
+      const below = e.clientY > div.getBoundingClientRect().top + div.offsetHeight / 2;
+      moveLine(dragLine, li + (below ? 1 : 0));
+    };
+    editor.appendChild(div);
+  });
+}
+document.addEventListener('mouseup', () => { dragging = false; });
+
+function renderTabList() {
+  const list = document.getElementById('tablist');
+  list.innerHTML = '';
+  [...tabs].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'tabitem' + (t.id === tab.id ? ' active' : '');
+    const name = document.createElement('span');
+    name.className = 'name' + (t.title ? '' : ' untitled');
+    name.textContent = t.title || 'Untitled';
+    if (t.artist) { const a = document.createElement('span'); a.className = 'artist'; a.textContent = t.artist; name.appendChild(a); }
+    const x = document.createElement('button'); x.className = 'x'; x.textContent = '×'; x.title = 'Delete';
+    x.onclick = e => { e.stopPropagation(); confirmDelete(t); };
+    item.append(name, x);
+    item.onclick = () => switchTab(t.id);
+    list.appendChild(item);
+  });
+}
+
+// ---------- confirm dialog ----------
+const dlg = document.getElementById('confirm');
+let pendingDelete = null;
+function confirmDelete(t) {
+  pendingDelete = t.id;
+  document.getElementById('confirmText').textContent = `“${t.title || 'Untitled'}” will be removed permanently.`;
+  dlg.showModal();
+}
+document.getElementById('confirmNo').onclick = () => dlg.close();
+document.getElementById('confirmYes').onclick = () => { dlg.close(); if (pendingDelete) deleteTab(pendingDelete); pendingDelete = null; };
+
+function resetSel() { sel = {line:0,string:0,col:0}; selEnd = null; lastTyped = null; }
+function switchTab(id) { tab = tabs.find(t => t.id === id); resetSel(); save(false); render(); }
+function deleteTab(id) {
+  tabs = tabs.filter(t => t.id !== id);
+  if (!tabs.length) tabs.push(newTab());
+  if (tab.id === id) tab = tabs[0];
+  resetSel(); save(false); render();
+}
+
+// ---------- sections ----------
+function addLineAfter(li) {
+  tab.lines.splice(li + 1, 0, emptyLine());
+  sel = { line: li + 1, string: 0, col: 0 }; selEnd = null; save(); render();
+}
+function deleteLine(li) {
+  tab.lines.splice(li, 1);
+  if (!tab.lines.length) tab.lines.push(emptyLine());
+  sel = { line: Math.min(li, tab.lines.length - 1), string: 0, col: 0 }; selEnd = null; save(); render();
+}
+function clearDropMarks() { editor.querySelectorAll('.drop-above, .drop-below').forEach(el => el.classList.remove('drop-above', 'drop-below')); }
+function moveLine(from, to) {  // insert line `from` before index `to` (to is in pre-removal indices)
+  dragLine = null;
+  if (to === from || to === from + 1) { render(); return; }
+  const [line] = tab.lines.splice(from, 1);
+  const dest = to > from ? to - 1 : to;
+  tab.lines.splice(dest, 0, line);
+  sel = { line: dest, string: 0, col: 0 }; selEnd = null; save(); render();
+}
+function duplicateLine(li) {
+  tab.lines.splice(li + 1, 0, JSON.parse(JSON.stringify(tab.lines[li])));
+  sel = { line: li + 1, string: 0, col: 0 }; selEnd = null; save(); render();
+}
+
+// ---------- editing ----------
+function cur() { return tab.lines[sel.line].cols[sel.col]; }
+function ensureRunway(line, col) { while (line.cols.length - 1 - col < 2) line.cols.push(emptyCol()); }
+function setNote(v) {
+  cur()[sel.string] = v;
+  ensureRunway(tab.lines[sel.line], sel.col);
+  save(); render();
+}
+function clearSelection() {
+  const r = rect(), cols = tab.lines[r.line].cols;
+  for (let c = r.c0; c <= r.c1; c++) for (let s = r.s0; s <= r.s1; s++) cols[c][s] = '';
+  save(); render();
+}
+function move(dl, ds, dc, extend = false) {
+  if (extend) {
+    const e = selEnd || { string: sel.string, col: sel.col };
+    const line = tab.lines[sel.line];
+    e.string = Math.max(0, Math.min(STRINGS.length - 1, e.string + ds));
+    e.col = Math.max(0, e.col + dc);
+    if (e.col >= line.cols.length) line.cols.push(emptyCol());
+    selEnd = (e.string === sel.string && e.col === sel.col) ? null : e;
+    render(); return;
+  }
+  let { line:l, string:s, col:c } = sel;
+  c += dc; s += ds; l += dl;
+  if (dl === 0 && c >= tab.lines[l].cols.length) tab.lines[l].cols.push(emptyCol());
+  l = Math.max(0, Math.min(tab.lines.length - 1, l));
+  s = Math.max(0, Math.min(STRINGS.length - 1, s));
+  c = Math.max(0, Math.min(tab.lines[l].cols.length - 1, c));
+  sel = { line:l, string:s, col:c }; selEnd = null; lastTyped = null; render();
+}
+
+// ---------- clipboard ----------
+function copySel() {
+  const r = rect(), cols = tab.lines[r.line].cols;
+  clip = [];
+  for (let s = r.s0; s <= r.s1; s++) { const row = []; for (let c = r.c0; c <= r.c1; c++) row.push(cols[c][s]); clip.push(row); }
+  // also put plain ASCII on the system clipboard
+  const widths = []; for (let c = r.c0; c <= r.c1; c++) widths.push(colWidth(cols[c]));
+  const txt = clip.map(row => row.map((n, i) => n ? n.padEnd(widths[i], '-') : '-'.repeat(widths[i])).join('')).join('\n');
+  copyText(txt);
+}
+function pasteClip() {
+  if (!clip) return;
+  const line = tab.lines[sel.line];
+  clip.forEach((row, i) => {
+    const s = sel.string + i; if (s >= STRINGS.length) return;
+    row.forEach((n, j) => {
+      const c = sel.col + j;
+      while (c >= line.cols.length) line.cols.push(emptyCol());
+      line.cols[c][s] = n;
+    });
+  });
+  ensureRunway(line, sel.col + clip[0].length - 1);
+  selEnd = { string: Math.min(STRINGS.length - 1, sel.string + clip.length - 1), col: sel.col + clip[0].length - 1 };
+  if (selEnd.string === sel.string && selEnd.col === sel.col) selEnd = null;
+  save(); render();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || dlg.open) return;
+  const mod = e.metaKey || e.ctrlKey;
+  if (mod) {
+    const k = e.key.toLowerCase();
+    if (k === 'c') { copySel(); e.preventDefault(); }
+    else if (k === 'x') { copySel(); clearSelection(); e.preventDefault(); }
+    else if (k === 'v') { pasteClip(); e.preventDefault(); }
+    return;
+  }
+  const key = `${sel.line}:${sel.string}:${sel.col}`;
+  if (/^[0-9]$/.test(e.key)) {
+    selEnd = null;
+    const old = cur()[sel.string];
+    const joined = old + e.key;
+    const v = (lastTyped === key && old.length === 1 && +joined <= 24) ? joined : e.key;
+    lastTyped = key;
+    setNote(v);
+    return e.preventDefault();
+  }
+  const sh = e.shiftKey;
+  const map = {
+    ArrowLeft: () => move(0,0,-1,sh), ArrowRight: () => move(0,0,1,sh),
+    ArrowUp: () => move(0,-1,0,sh), ArrowDown: () => move(0,1,0,sh),
+    ' ': () => move(0,0,1),
+    Enter: () => addLineAfter(sel.line),
+    Escape: () => { selEnd = null; render(); },
+    Backspace: () => clearSelection(), Delete: () => sh ? removeCol() : clearSelection(),
+    Insert: () => insertCol(),
+    PageDown: () => move(1,0,0), PageUp: () => move(-1,0,0),
+  };
+  if (map[e.key]) { map[e.key](); e.preventDefault(); }
+});
+
+function insertCol() { tab.lines[sel.line].cols.splice(sel.col, 0, emptyCol()); selEnd = null; save(); render(); }
+function removeCol() {
+  const cols = tab.lines[sel.line].cols;
+  if (cols.length > 1) cols.splice(sel.col, 1);
+  if (sel.col >= cols.length) sel.col = cols.length - 1;
+  selEnd = null; save(); render();
+}
+
+// ---------- trim: only removes trailing empties, never touches timing ----------
+function trimEnds() {
+  tab.lines.forEach(line => {
+    let last = -1; line.cols.forEach((c, i) => { if (hasNote(c)) last = i; });
+    line.cols.length = Math.max(START_COLS, last + 1 + TAIL);
+    for (let i = 0; i < line.cols.length; i++) if (!line.cols[i]) line.cols[i] = emptyCol();
+  });
+  sel.col = Math.min(sel.col, tab.lines[sel.line].cols.length - 1); selEnd = null;
+  save(); render();
+}
+
+// ---------- export ----------
+function toText() {
+  const head = [tab.title, tab.artist].filter(Boolean).join(' — ');
+  const body = tab.lines.map(line => {
+    const widths = line.cols.map(colWidth);
+    return STRINGS.map((name, si) =>
+      name + '|' + line.cols.map((c, ci) => c[si] ? c[si].padEnd(widths[ci], '-') : '-'.repeat(widths[ci])).join('') + '|'
+      + (si === 3 && line.note ? ' ' + line.note : '')
+    ).join('\n');
+  }).join('\n\n');
+  return head ? head + '\n\n' + body : body;
+}
+
+// ---------- ui wiring ----------
+document.getElementById('title').oninput = e => { tab.title = e.target.value; save(); renderTabList(); };
+document.getElementById('artist').oninput = e => { tab.artist = e.target.value; save(); renderTabList(); };
+document.getElementById('new').onclick = () => { tab = newTab(); tabs.push(tab); resetSel(); save(); render(); document.getElementById('title').focus(); };
+document.getElementById('newsection').onclick = () => addLineAfter(tab.lines.length - 1);
+document.getElementById('trim').onclick = trimEnds;
+function copyText(txt) {
+  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(txt).catch(() => {});
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch {} ta.remove();
+}
+document.getElementById('copy').onclick = () => copyText(toText());
+document.getElementById('print').onclick = () => window.print();
+
+load(); render();
+</script>
+</body>
+</html>

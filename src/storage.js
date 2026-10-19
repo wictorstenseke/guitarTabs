@@ -1,0 +1,52 @@
+import { EXAMPLE_ID, exampleTab } from './seed.js';
+
+const LS_TABS = 'guitartabs:tabs', LS_CUR = 'guitartabs:current';
+
+// localStorage can throw (data: URLs, private mode, blocked storage) — fall back to in-memory
+const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+
+export function loadTabs() {
+  let tabs = [];
+  try { tabs = JSON.parse(lsGet(LS_TABS)) || []; } catch { tabs = []; }
+  // migrate old numeric repeat -> free-text note
+  tabs.forEach(t => t.lines.forEach(l => { if (l.note === undefined) { l.note = l.repeat > 1 ? 'x' + l.repeat : ''; delete l.repeat; } }));
+  // the example is always present and always pristine
+  tabs = [exampleTab(), ...tabs.filter(t => t.id !== EXAMPLE_ID)];
+  const cur = lsGet(LS_CUR);
+  const current = tabs.find(t => t.id === cur) || tabs[0];
+  return { tabs, currentId: current.id };
+}
+
+export function saveTabs(tabs, currentId) {
+  lsSet(LS_TABS, JSON.stringify(tabs.filter(t => !t.example)));
+  lsSet(LS_CUR, currentId);
+}
+
+// ---------- backup: export / import as JSON ----------
+export function exportJson(tabs) {
+  const data = JSON.stringify({ app: 'guitartabs', version: 1, exportedAt: new Date().toISOString(), tabs: tabs.filter(t => !t.example) }, null, 1);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+  a.download = `guitar-tabs-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// Tabs in an export file (or a bare array of tabs). Throws a readable message on anything else.
+export function parseImport(text) {
+  let data; try { data = JSON.parse(text); } catch { throw new Error('Not a JSON file.'); }
+  const tabs = Array.isArray(data) ? data : data?.tabs;
+  if (!Array.isArray(tabs)) throw new Error('No tabs found in this file.');
+  const ok = tabs.filter(t => t && typeof t.id === 'string' && t.id !== EXAMPLE_ID && Array.isArray(t.lines) && t.lines.every(l => Array.isArray(l?.cols)));
+  if (!ok.length) throw new Error('No valid tabs found in this file.');
+  return ok.map(t => ({
+    ...t, title: t.title || '', artist: t.artist || '', example: false, updatedAt: t.updatedAt || Date.now(),
+    lines: t.lines.map(l => ({ cols: l.cols, note: l.note ?? '' })),
+  }));
+}
+
+// Merge: an imported tab replaces the existing one with the same id, the rest are appended.
+export function mergeTabs(existing, imported) {
+  const ids = new Set(imported.map(t => t.id));
+  return [...existing.filter(t => t.example || !ids.has(t.id)), ...imported];
+}
