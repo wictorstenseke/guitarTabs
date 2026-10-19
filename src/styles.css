@@ -64,7 +64,7 @@
   .tabitem .more:hover, .tabitem.open .more { opacity: 1; background: rgba(27,26,23,.08); }
   .tabitem input.rename { font: inherit; width: 100%; border: 0; border-bottom: 1px solid var(--accent); background: transparent; color: var(--ink); outline: 0; padding: 0; }
   .menu { position: absolute; right: 6px; top: calc(100% - 4px); z-index: 10; min-width: 150px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 4px; box-shadow: 0 12px 30px -10px rgba(27,26,23,.4); display: flex; flex-direction: column; }
-  .menu button { text-align: left; border: 0; background: transparent; color: var(--ink); padding: 7px 10px; border-radius: 5px; font-size: 12px; }
+  .menu button { justify-content: flex-start; text-align: left; border: 0; background: transparent; color: var(--ink); padding: 7px 10px; border-radius: 5px; font-size: 12px; }
   .menu button:hover { background: rgba(27,26,23,.06); }
   .menu button.danger { color: var(--accent); }
   .menu button.danger:hover { background: rgba(194,80,42,.1); }
@@ -102,17 +102,18 @@
   .sheet.readonly .repeat input:placeholder-shown { visibility: hidden; }
   .sheet.readonly .repeat input { border-bottom-color: transparent !important; cursor: default; }
   .toolbar .sharewrap { position: relative; }
-  .toolbar .sharebtn { display: inline-flex; align-items: center; gap: 6px; }
+
   .toolbar .sharebtn.open { background: #d35a31; }
-  .toolbar .sharebtn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
   .toolbar .menu { right: 0; top: calc(100% + 6px); min-width: 170px; font-family: var(--mono); }
   .toolbar .menu button { color: var(--ink); background: transparent; border: 0; font-size: 12px; letter-spacing: 0; }
   .toolbar .menu button:hover { background: rgba(27,26,23,.06); }
   .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 20; background: var(--ink); color: var(--paper); font-family: var(--mono); font-size: 12px; padding: 8px 14px; border-radius: 8px; box-shadow: 0 8px 24px -8px rgba(27,26,23,.5); animation: toast .18s ease-out; pointer-events: none; }
   @keyframes toast { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
-  .toolbar button.save { display: inline-flex; align-items: center; gap: 6px; border-color: rgba(255,255,255,.4); }
-  .toolbar button.save svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .toolbar button.save { border-color: rgba(255,255,255,.4); }
+  .ico { width: 13px; height: 13px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .ico .f { fill: currentColor; stroke: none; }
   button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     font: inherit; font-family: var(--mono); font-size: 12px; letter-spacing: .02em;
     padding: 7px 12px; border-radius: 6px; cursor: pointer;
     border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); color: var(--paper);
@@ -162,7 +163,8 @@
   /* section tools sit under the section, bottom-right, revealed on hover */
   .linetools { position: absolute; left: 0; bottom: 0; display: flex; gap: 4px; opacity: 0; transition: opacity .15s ease .2s; }
   .line:hover .linetools, .linetools:hover, .line:focus-within .linetools { opacity: 1; transition-delay: 0s; }
-  .linetools button { white-space: nowrap; padding: 2px 7px; font-size: 11px; background: transparent; color: var(--ink-soft); border-color: var(--rule); }
+  .linetools button { white-space: nowrap; gap: 4px; padding: 2px 7px; font-size: 11px; background: transparent; color: var(--ink-soft); border-color: var(--rule); }
+  .linetools .ico { width: 11px; height: 11px; }
   .linetools button:hover { color: var(--accent); background: rgba(194,80,42,.08); }
   .grip { position: absolute; right: 100%; top: 50%; transform: translateY(-50%); margin-right: 10px; cursor: grab; display: flex; align-items: center; justify-content: center; width: 22px; height: 30px; padding: 0; border: 1px solid transparent; background: transparent; color: var(--ink-soft); opacity: 0; transition: opacity .15s ease .2s; }
   .grip svg { width: 10px; height: 16px; display: block; fill: currentColor; }

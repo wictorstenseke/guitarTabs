@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { STRINGS, colWidth, inRect } from './model.js';
 import { chunkCols } from './print.js';
 import GripIcon from './GripIcon.jsx';
+import Icon from './Icon.jsx';
 
 export default function Section({ line, li, sel, selEnd, r, readOnly, dragLine, on, printBudget, playCol = -1 }) {
   const [drop, setDrop] = useState('');          // '', 'drop-above', 'drop-below'
@@ -68,8 +69,8 @@ export default function Section({ line, li, sel, selEnd, r, readOnly, dragLine, 
       ))}
       {!readOnly && (
         <div className="linetools">
-          <button onClick={() => on.duplicate(li)}>duplicate</button>
-          <button onClick={() => on.remove(li)}>delete section</button>
+          <button onClick={() => on.duplicate(li)}><Icon name="copy" />duplicate</button>
+          <button onClick={() => on.remove(li)}><Icon name="trash" />delete section</button>
         </div>
       )}
     </div>

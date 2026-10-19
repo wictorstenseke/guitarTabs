@@ -6,6 +6,7 @@ import { exportJson, loadSideOpen, loadTabs, mergeTabs, parseImport, saveSideOpe
 import { play } from './audio.js';
 import { clearHash, shareUrl, tabFromHash } from './share.js';
 import Section from './Section.jsx';
+import Icon from './Icon.jsx';
 
 const initial = loadTabs();
 
@@ -112,10 +113,10 @@ export default function App() {
     : saveShared();
   const SHARE = '__share';   // menuFor value for the toolbar share menu
   const shareActions = [
-    { label: 'Copy link', hint: 'The whole tab lives in the link — anyone can open and save it', run: () => { copyText(shareUrl(tab)); notify('Link copied'); } },
-    { label: 'Copy as text', hint: 'Plain ASCII tab for chats, forums, notes', run: () => { copyText(toText(tab)); notify('Copied as text'); } },
-    { label: 'Download JSON', hint: 'Just this tab, importable on another device', run: () => { exportJson([tab], tab.title); notify('Downloading…'); } },
-    { label: 'Print', hint: 'Portrait or landscape, scaled to fill the page', run: () => setPrintOpen(true) },
+    { label: 'Copy link', icon: 'link', hint: 'The whole tab lives in the link — anyone can open and save it', run: () => { copyText(shareUrl(tab)); notify('Link copied'); } },
+    { label: 'Copy as text', icon: 'text', hint: 'Plain ASCII tab for chats, forums, notes', run: () => { copyText(toText(tab)); notify('Copied as text'); } },
+    { label: 'Download JSON', icon: 'download', hint: 'Just this tab, importable on another device', run: () => { exportJson([tab], tab.title); notify('Downloading…'); } },
+    { label: 'Print', icon: 'printer', hint: 'Portrait or landscape, scaled to fill the page', run: () => setPrintOpen(true) },
   ];
   const addTab = () => { const t = newTab(); setTabs(ts => [...ts, t]); switchTab(t.id, true); setTimeout(() => titleRef.current?.focus(), 0); };
   const updateTab = (id, fn) => setTabs(ts => ts.map(t => { if (t.id !== id || t.example) return t; const c = clone(t); fn(c); c.updatedAt = Date.now(); return c; }));
@@ -316,11 +317,11 @@ export default function App() {
         <div className="sidehead">
           <div className="brand">Tab<i>.</i></div>
           <button className="collapse" title={sideOpen ? 'Collapse sidebar' : 'Expand sidebar'} aria-label={sideOpen ? 'Collapse sidebar' : 'Expand sidebar'} aria-expanded={sideOpen} onClick={() => setSideOpen(o => !o)}>
-            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5" /><line x1="8" y1="3.5" x2="8" y2="16.5" /></svg>
+            <Icon name="sidebar" />
           </button>
         </div>
         <div className="sidebody" {...(sideOpen ? {} : { inert: '' })}>
-        <button className="new" onClick={addTab}>+ New tab</button>
+        <button className="new" onClick={addTab}><Icon name="plus" />New tab</button>
         <div className="section">Tabs</div>
         <div className="tablist">
           {sorted.map(t => (
@@ -338,24 +339,24 @@ export default function App() {
                 </span>
               )}
               {t.example && <span className="tag">example</span>}
-              <button className="more" title="More" onClick={e => { e.stopPropagation(); setMenuFor(m => m === t.id ? null : t.id); }}>⋯</button>
+              <button className="more" title="More" onClick={e => { e.stopPropagation(); setMenuFor(m => m === t.id ? null : t.id); }}><Icon name="more" /></button>
               {menuFor === t.id && (
                 <div className="menu" onClick={e => e.stopPropagation()}>
-                  <button onClick={() => { setMenuFor(null); dupTab(t); }}>{t.example ? 'Duplicate to edit' : 'Duplicate'}</button>
-                  {!t.example && <button onClick={() => { setMenuFor(null); switchTab(t.id, true); }}>Edit</button>}
-                  {!t.example && <button onClick={() => { setMenuFor(null); setRenaming(t.id); }}>Rename</button>}
-                  {!t.example && <button className="danger" onClick={() => { setMenuFor(null); askDeleteTab(t); }}>Delete</button>}
+                  <button onClick={() => { setMenuFor(null); dupTab(t); }}><Icon name="copy" />{t.example ? 'Duplicate to edit' : 'Duplicate'}</button>
+                  {!t.example && <button onClick={() => { setMenuFor(null); switchTab(t.id, true); }}><Icon name="pencil" />Edit</button>}
+                  {!t.example && <button onClick={() => { setMenuFor(null); setRenaming(t.id); }}><Icon name="rename" />Rename</button>}
+                  {!t.example && <button className="danger" onClick={() => { setMenuFor(null); askDeleteTab(t); }}><Icon name="trash" />Delete</button>}
                 </div>
               )}
             </div>
           ))}
         </div>
         <div className="io">
-          <button onClick={() => exportJson(tabs.filter(t => !t.example))} title="Download all your tabs as a JSON backup">Export</button>
-          <button onClick={() => fileRef.current?.click()} title="Import tabs from a JSON backup">Import</button>
+          <button onClick={() => exportJson(tabs.filter(t => !t.example))} title="Download all your tabs as a JSON backup"><Icon name="download" />Export</button>
+          <button onClick={() => fileRef.current?.click()} title="Import tabs from a JSON backup"><Icon name="upload" />Import</button>
           <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={e => { importFile(e.target.files[0]); e.target.value = ''; }} />
         </div>
-        <button className="help-btn" onClick={() => setHelpOpen(true)}>Help &amp; shortcuts</button>
+        <button className="help-btn" onClick={() => setHelpOpen(true)}><Icon name="help" />Help &amp; shortcuts</button>
         </div>
       </aside>
 
@@ -364,35 +365,35 @@ export default function App() {
           {shared ? (
             <>
               <span className="badge">Shared with you</span>
-              <button className="primary" onClick={askSaveShared}>{sharedExists ? 'Replace my copy' : 'Save to my tabs'}</button>
-              <button onClick={() => switchTab(currentId)}>Dismiss</button>
+              <button className="primary" onClick={askSaveShared}><Icon name="bookmark" />{sharedExists ? 'Replace my copy' : 'Save to my tabs'}</button>
+              <button onClick={() => switchTab(currentId)}><Icon name="x" />Dismiss</button>
             </>
           ) : tab.example ? (
             <>
               <span className="badge">Example · read-only</span>
-              <button className="primary" onClick={() => dupTab()}>Duplicate to edit</button>
+              <button className="primary" onClick={() => dupTab()}><Icon name="copy" />Duplicate to edit</button>
             </>
           ) : !editing ? (
-            <button className="primary" onClick={() => { setEditing(true); resetSel(); }}>Edit</button>
+            <button className="primary" onClick={() => { setEditing(true); resetSel(); }}><Icon name="pencil" />Edit</button>
           ) : (
             <>
               <button className="save" onClick={() => { setEditing(false); setSelEnd(null); }} title="Back to the practice view (changes are saved as you type)">
-                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5" /></svg>Save
+                <Icon name="check" />Save
               </button>
-              <button onClick={() => addLineAfter(tab.lines.length - 1)}>+ New section</button>
-              <button onClick={trimEnds} title="Remove trailing dashes (never changes timing)">Trim ends</button>
-              <button onClick={askFixSpacing} title="Insert a dash between touching notes (may shift timing)">Fix spacing</button>
+              <button onClick={() => addLineAfter(tab.lines.length - 1)}><Icon name="plus" />New section</button>
+              <button onClick={trimEnds} title="Remove trailing dashes (never changes timing)"><Icon name="scissors" />Trim ends</button>
+              <button onClick={askFixSpacing} title="Insert a dash between touching notes (may shift timing)"><Icon name="spacing" />Fix spacing</button>
               {fullCols && (
                 <span className="ctx">
-                  <button onClick={shiftLeft} disabled={!canShiftLeft} title="Remove one blank column before the selection">◀ Pull in</button>
-                  <button onClick={shiftRight} title="Insert one blank column before the selection">Push out ▶</button>
+                  <button onClick={shiftLeft} disabled={!canShiftLeft} title="Remove one blank column before the selection"><Icon name="left" />Pull in</button>
+                  <button onClick={shiftRight} title="Insert one blank column before the selection">Push out<Icon name="right" /></button>
                 </span>
               )}
             </>
           )}
           <span className="spacer" />
           <span className="play">
-            <button onClick={togglePlay} title="Play the tab (technique and bar-line columns take no time)">{playPos ? '■ Stop' : '▶ Play'}</button>
+            <button onClick={togglePlay} title="Play the tab (technique and bar-line columns take no time)">{playPos ? <><Icon name="stop" />Stop</> : <><Icon name="play" />Play</>}</button>
             {playPos && <>
               <input type="range" min="2" max="14" step="1" value={tempo} title="Speed: columns per second"
                 onChange={e => { setTempo(+e.target.value); }} />
@@ -401,11 +402,11 @@ export default function App() {
           </span>
           <span className="sharewrap">
             <button className={'sharebtn primary' + (menuFor === SHARE ? ' open' : '')} aria-haspopup="menu" aria-expanded={menuFor === SHARE} onClick={() => setMenuFor(m => m === SHARE ? null : SHARE)}>
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8M5 5l3-3 3 3M3.5 8.5v4a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-4" /></svg>Share
+              <Icon name="share" />Share
             </button>
             {menuFor === SHARE && (
               <div className="menu" role="menu" onClick={e => e.stopPropagation()}>
-                {shareActions.map(a => <button key={a.label} role="menuitem" title={a.hint} onClick={() => { setMenuFor(null); a.run(); }}>{a.label}</button>)}
+                {shareActions.map(a => <button key={a.label} role="menuitem" title={a.hint} onClick={() => { setMenuFor(null); a.run(); }}><Icon name={a.icon} />{a.label}</button>)}
               </div>
             )}
           </span>
@@ -455,13 +456,13 @@ export default function App() {
           <dt>Hover a section</dt><dd>Shows duplicate / delete, the note field (x2, chorus…), and the drag handle for reordering.</dd>
           <dt><kbd>PgUp</kbd> / <kbd>PgDn</kbd></dt><dd>Jump between sections.</dd>
           <h4>Tabs</h4>
-          <dt><kbd>⋯</kbd> in the sidebar</dt><dd>Rename, duplicate or delete a tab. The example tab is read-only — duplicate it to edit.</dd>
+          <dt><Icon name="more" /> in the sidebar</dt><dd>Rename, duplicate or delete a tab. The example tab is read-only — duplicate it to edit.</dd>
           <dt>Edit / Save</dt><dd>Tabs open in a clean practice view. Edit switches to editing, Save goes back (everything is saved as you type anyway). New and duplicated tabs open in edit mode.</dd>
           <dt>Autosave</dt><dd>Everything is saved in this browser automatically.</dd>
           <dt>Share</dt><dd>Copy a link (the whole tab is packed inside — whoever opens it can save it), copy as plain text, download this tab as JSON, or print.</dd>
           <dt>Export / Import</dt><dd>Back up all tabs to a JSON file, or restore from one. Imported tabs with the same id replace the existing ones.</dd>
           <h4>Playback</h4>
-          <dt><kbd>▶ Play</kbd></dt><dd>Plays the tab: every column is one beat at the chosen speed. Technique and bar-line columns take no time; section repeats are ignored.</dd>
+          <dt><Icon name="play" /> Play</dt><dd>Plays the tab: every column is one beat at the chosen speed. Technique and bar-line columns take no time; section repeats are ignored.</dd>
         </dl>
         <div className="actions"><button onClick={() => setHelpOpen(false)}>Close</button></div>
       </dialog>
