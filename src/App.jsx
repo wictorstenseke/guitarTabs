@@ -507,7 +507,7 @@ export default function App() {
           <dt>Edit / Save</dt><dd>Tabs open in a clean practice view. Edit switches to editing, Save goes back (everything is saved as you type anyway). New and duplicated tabs open in edit mode.</dd>
           <dt>Autosave</dt><dd>Everything is saved in this browser automatically.</dd>
           <dt>Share</dt><dd>Copy a link (the whole tab is packed inside — whoever opens it can save it), copy as plain text, download this tab as JSON, or print.</dd>
-          <dt>Hints</dt><dd>While editing, the note under the cursor shows where else it can be played: grey frets on the other strings, fainter ones an octave away. Type over one to use it. The Hints button turns this off.</dd>
+          <dt>Hints</dt><dd>While editing, the note under the cursor shows the same pitch as a grey fret on the strings above and below. Type over one to use it. The Hints button turns this off.</dd>
           <dt>Display</dt><dd>In the practice view: lay the tab out as A4 portrait or landscape, and zoom the staff (<kbd>+</kbd> / <kbd>-</kbd> keys work too). Zoom resets when you switch tabs.</dd>
           <dt>Export / Import</dt><dd>Back up all tabs to a JSON file, or restore from one. Imported tabs with the same id replace the existing ones.</dd>
           <h4>Playback</h4>

@@ -167,9 +167,9 @@
   .cell { width: calc(var(--w) * 1ch); text-align: center; cursor: pointer; color: var(--dash); border-radius: 2px; }
   .cell:hover { background: rgba(27,26,23,.08); }
   .cell.note { color: var(--ink); }
-  .cell.ghost { color: #b9b2a3; }
-  .cell.ghost .oct { opacity: .55; }
-  .cell.ghost:hover { color: var(--dash); }
+  .cell.ghost { position: relative; color: transparent; }   /* the dashes hide behind the ghost fret, which stays centred on the column */
+  .cell .hint { position: absolute; left: 50%; top: 0; transform: translateX(-50%); color: #b9b2a3; pointer-events: none; }
+  .cell.ghost:hover .hint { color: var(--dash); }
   .cell.barline { color: var(--ink); font-weight: 500; }
   .cell.playing { background: rgba(194,80,42,.22); color: var(--ink); }
   .cell.range { background: var(--range); color: var(--ink); }
