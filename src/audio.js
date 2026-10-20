@@ -3,7 +3,7 @@
 // notes (x2 …) are ignored.
 import { isBar, isFret, isTech } from './model.js';
 
-const OPEN_MIDI = [64, 59, 55, 50, 45, 40];   // e B G D A E
+import { OPEN_MIDI } from './hints.js';
 const freq = m => 440 * Math.pow(2, (m - 69) / 12);
 const silentCol = col => isBar(col) || (col.some(n => n) && col.every(n => !n || isTech(n)));
 
